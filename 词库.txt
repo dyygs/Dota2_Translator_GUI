@@ -1,0 +1,85 @@
+位置缩写是pos，一号位大哥就是pos1或者carry, 中单pos2，辅助pos4/5或者直接说support/sup，(天梯中五号位可以用hard support)；core一般泛指核心(只和打法有关系，位置不限)
+先手英雄=initiator，肉盾=tank，近战=melee，远程=range，控制=disabler/stun，造伤=damage
+补充：大核=hard carry 团控=crowd control
+常见用法：
+I go pos1 = 我打一号位；u go pos3 = 你打三号位；blue go support = 蓝色玩家打辅助去；zeus pos4 = 四号位宙斯；
+需要先手英雄 = need initiator，
+选个带控的远程酱油 = pick range sup with stun;
+all melee against void gg go nxt = 全是近战打nm的虚空赶紧敲了下一把
+
+英雄缩写应该基本都知道，就不每个都说了，列举几个版本热门和鱼塘常见英雄(重点列举容易说错的)
+英雄类型：力量=strength，敏捷=agility，智力=intelligence，全才=universal
+1号位常见英雄缩写：
+− 点击显示隐藏的内容 ...
+混沌骑士=ck，虚空假面=fv/void，剑圣=jugg，幻刺=pa，力丸/隐刺=riki/sa，火枪=sniper，骷髅王/冥魂大帝=wk(wraith king)/或者snk(这个比较少见)，小鱼人=slark，奶绿/琼英碧灵=muerta，蚂蚁/编织者=weaver，敌法师=am(不是df)，幽鬼=spe 不是UG ，水人/变体精灵=morph，矮人直升机=gyro( 看到不止一个helicopter了 )，血魔=bs/bloodseeker(一般用后者全称)，巨魔战将=troll(欧服美服语境下也被用来骂人是无脑喷子)，小黑/卓尔游侠=drow，拍拍熊/熊战士=ursa，小骷髅/骷髅弓箭手=clinkz，花仙子/邪影芳灵=dark willow或者willow, 电棍/雷泽=razor(不是otto！)，猴子/幻影长矛手=pl(偶尔也有lancer)
+瘟疫法师=nec(necrophos)，土猫/大地之灵=earth(因为撼地者/小牛和火猫的缩写也是es，所以三猫一般用前称)，火猫/灰烬之灵=ember，紫猫/虚无之灵=void，德鲁伊=druid, 屠夫=pudge，兽=primalbeast或者beast，蓝猫/风暴之灵=storm/ss(strom知道的多一点)，黑鸟/ 已经绅士者 太难打了反正你们也知道是哪个 目光呆滞鸟=od，拉席克/老鹿/头上长角的摩托车=leshrac/lesh，痛苦女王=qop，骨法/帕格纳=pugna，电狗/天穹守望者=arc/arc warden，育母蜘蛛=brood/broodmother，船长=kunkka，滚滚/石鳞剑士=pango，戴泽/暗牧=dazzle，祈求者/卡尔=invoker/invo(injoker用于嘲讽)，炼金术士=alch/ga(ga在东南亚偶尔会出现)，毒龙/冥界亚龙=viper，老奶奶/电炎绝手=snapfire
+白牛/裂魂人=sb(spiritbreaker, 也可以用bara也行 雪碧破坏者 )，大锤/破晓晨星=dawn，刚被兽=bristle/bristleback/bb，半人马战行者=centaur/CW，潮汐猎人=tide/th，军团指挥官=lc/legion，孽主=underlord，不朽尸王=ud/undying，大鱼人/斯拉达=slardar，夜魔=ns/stalker，全能骑士=omniknight/omni/ok(ok用得很少)，伐木机=timbersaw/timber，酒仙=brewmaster/brew，狼人=lycan(不是wolf)，谜团=enigma，黑暗贤者=ds/seer
+蓝胖/食人魔魔法师=ogre，小松鼠/森海飞霞=hoodwink，赏金猎人=bh，小牛/撼地者=earthshaker/es(一般用es)，大牛/上古巨神=elder titan(不常见，没见过用缩写的)，树精卫士=treant，巨牙海民=tusk，天涯墨客=grimstroke/grim，光法=kotl，双头龙/杰奇洛=jakiro(不要用thd twin-head dragon)，冰女/水晶室女=cm，萨尔/干扰者=disruptor，小精灵=io，白虎/米拉娜=mirana(pom也有用的)，小强/司夜刺客=nyx/na，冰龙/寒冬飞龙=winter/wyvern/ww(都行，ww少见)，发条技师=clockwerk，cg是老称呼，小鹿/魅惑魔女=enchantress/enchan，EH等缩写也行，巫医=wd/witchdoctor，巫妖=lich，炸弹人/工程师=techies/techi，天怒法师=skywrath，术士=warlock，WL，神谕者=oracle，先知=np/nature，小小=tiny，复仇之魂=vs/venge，剧毒术士=venom
+顺便再补充几个英雄缩写，有些不常见是因为来自do1
+小狗naix，光鹿TS，死骑LOA
+宙斯MK，神灵SW，船长coco
+兽王BM，人马CW，巨魔TW
+小鹿EH，发条CG，白虎pom
+萨尔thrall，先知fur，大牛TC，暗牧SP
+路线：lane是兵线的统称，top/mid/bot lane分别对应三条兵线，但是使用时一般忽略lane直接打前面的方位词 - top是上路，bot是下路(也可能说你是个bot)，mid是中路 mid or feed=给我中单不给就送 ，jungle是野区(一般新手局出现抢位置会有人说去打野)gank一般指中路游走边路，roam一般指辅助在对线期游走其他路，游走还可以用rotate
+感谢补充：选人时沟通优势路可以说safe lane, 劣势路是offlane
+常见表达：
+我走下路/上路 = I go bot/top ；让我中单 = let me mid ；A去打辅助 = A go sup 或者 A support；B打核心位/发育位 = B go core 或者 B go farm
+ck go farm top = 混沌骑士(ck)去上路发育； lion go roam mid = 莱恩去游走中路，I take bot = 我来占下面兵线，switch lane = 换路；
+qop pls gank tb = 痛苦女王求求你来抓一下tb吧
+
+河道刷新的功能符文=rune (dd/double=双倍，arcane=奥术，illu=幻象，haste=加速，shield=护盾，invis=隐身，regen=恢复)，赏金符文=bounty，疗伤莲花=lotus，智慧符文/7分钟刷的经验符=wisdom
+常见用法：
+sup get the rune = 辅助去控符；需要收集莲花 = need lotus，中路有加速符要吃下路的人=mid haste gank bot
+
+前期商店用品：吃树/树之祭祀=tango (需要吃树就ping一下队友身上的然后说这个词) ，血腥榴弹=grenade，小净化药水=clarity，治疗药膏=slave，魔棒=magic stick，眼/守卫统称=wards，侦察守卫=observer，岗哨守卫=sentry，显隐之尘=dust，速度之靴=boots，奥术鞋/秘法鞋=arcane boots，回城卷轴/传送卷轴=tp，诡计之雾=smoke/sod
+常见用法：
+I need tango/点一下队友身上吃树然后说tango = 我需要你给我一个吃树；
+need wards = 辅助快买眼插眼；need sentry = 需要真眼，bring dust = 带上粉 no wards gg sup = 辅助不做眼这把寄了 ；
+grenade can kill A = 扔个血腥榴弹配合有机会击杀A；
+tp cd = 回城卷轴在冷却中；we can smoke = 我们可以开雾
+
+克制=counter，游戏前期/后期=early game/late game；小兵=creeps，中立野怪=neutrals，远古=ancients，野区=jungle，堆野=stack；补刀=last hit, LH，反补=deny；拉野=pull，打钱=farm，推线=push；反眼=deward
+常见用法：
+A在游戏后期克制B = A counter B in late game；幻刺快去打野 = pa go jungle；
+辅助去屯野，我可以自己占线 = sup go stack neutrals, i can solo
+这里远古野囤了几波 = ancient stacks here；辅助去拉野 = sup go pull neutrals(或者直接go pull)；
+你补刀我辅助 = you get the creeps, i go sup
+ping一个地方然后warded = 这里对面做眼了；ping一个地方deward = 辅助快来这反眼
+好好好就知道刷不打架，刷一辈子到游戏结束吧 = gg all farming no one fight
+
+技能(总称)=spell/ability，控制=stun(disable是统称，stun一般指眩晕，也可以泛指)，缠绕=root，破坏(破被动)=break，爆发=nuke，沉默=silence，驱散=dispel，妖术/变羊=hex，闪烁=blink，天赋=talent，大招/终极技能=ult，目标=target，忽略=ignore
+常见用法：
+对面潮汐猎人没大了，我们推中 = tide no ult/they have no ravage, lets push mid;
+我们虚空有大，我们开雾干 他娘的一波 = void has ult, we go smoke/sod;
+lion去打先手羊对面中单 = lion go hex their mid
+那虚空加满了二技能没有大招，我们无视他就好 = void max 2nd ability and no ult, just ignore him
+
+可能会用到的一些关键技能名缩写(大招可以直接用ult，这里是方便队友说能看得懂)：
+地图机制和关键道具：
+魔方/魔晶=tormentor/shard (可以直接ping魔方说shard，也可以用正式名称喊队友来打)，A杖/阿哈利姆的神杖=agha/scepter，圣剑=rapier，刷新球=refresher，飞鞋/远行鞋=boots of travel，散失=diffusal，大隐刀/白银之锋=silver edge，跳刀/闪烁匕首=dagger/blink dagger，盘子/永恒之盘=disk/aeon disk，大骨灰=spirit vessel或者vessel，绿杖/幽魂权杖=ghost，虚灵刀=ethereal/EB，微光披风=glimmer或者cape，推推棒/原力法杖=force staff，羊刀/邪恶镰刀=scythe，大吹风=wind walker，缚灵索=gleipnir，莲花/青莲宝珠=lotus，冰甲/希瓦的守护=shiva，笛子=pipe，天堂=halberd，辉耀=radiance，狂战斧=BF/battlefury，中立物品=neutral item；
+补充：强袭=ac/assault，梅肯=mek，卫士胫甲=guardian，吸血鬼的祭品=vlad，吹风=eul，金箍棒=mkb，撒旦之邪力=satanic，暗灭=deso，晕锤/碎颅锤=basher，大晕锤/深渊之刃=abyssal，冰眼/斯嘉蒂之眼=skadi，点金手=midas
+肉山=rs/roshan，不朽盾=aegis，超级兵=mega，兵营=barracks，基地=base/ancient，高地=hg，前哨=outpost
+常见用法：
+我们先拆他们超级兵，然后肉山 = we mega first, then go rs
+小牛快点攒钱买跳刀 = es get dagger fast
+辅助做个盘子和羊刀 = sup get disk and scythe
+对面有沉默和缚灵索，整几个驱散 = they have silencer and gleipnir, get some dispel
+这幻刺怎么刷了这么久没装备啊，寄 = pa no item, gg next
+
+战术用语：
+集合/抱团=stick，上去卖/勾引=bait，买活=bb，后撤=back/retreat (后者较为少见)，给压力/逼迫=force，保护=protect，防守=defend，放弃=give，团战=team fight，视野=vision，分散=split，偷塔=rat，风筝=kite，换血/换命=trade，深入=dive
+常见用法：
+他们有小鱼人，别单走，我们抱团 = dont go solo, they have slark, lets stick;
+让虚空上去勾引，我们蹲 = void go bait, we hide behind/follow you(实际用的时候队友只要不傻就不用说后半句)；
+我们肉山后推中，逼迫他们买活，看情况可以直接基地 = we rs and push mid, force bb，could straight go base
+不朽盾还有2分钟，不和他们打团 = aegis in 2mins, avoid team fight
+我们这里需要视野 = we need vision here
+打团辅助保护小黑 = sup protect drow in team fight
+没买活，这路/这个肉山给他们了 = give barracks/rs, no bb
+正面打不过，我们分散带线 = can't fight, we split push
+敌法去偷塔，我们守高地 = am go rat, we defend hg
+熊战士没有bkb，我们风筝他 = ursa no bkb, we kite
+英语(欧服，美服，sea)：
+lmao(笑死)，clown(小丑)，pathetic(可悲)，joke(笑话)，cancer(毒瘤)，pervert(变态)，noob(菜鸟)，moron(蠢货)，anus(后门)，subhuman(玩的不像人)，retard(脑残)，useless crap(没用的废物)，shitty player(辣鸡选手)，funny/cute (滑稽)，idiot(sb)，ape(猿人)，embarrassment(丢人)，imbecility(低能)，handicapped(残疾，一般和mentally联用)，twat(傻B)，stfu(tmd闭上嘴)，ez，diff/gap (差距，用于形容对位处刑，例：mid diff)
+个人感觉英语特别脏的话遇上的不多，遇上了也没啥杀伤力，大部分都是几句话复读，从宗教/文化/意识形态角度攻击会容易让欧服玩家破防。

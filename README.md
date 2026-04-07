@@ -2,6 +2,13 @@
 
 在Dota2游戏中输入中文，按指定按键自动翻译为英文并发送。
 
+## 更新日志
+
+### 2024-04 最新更新
+- ✅ 补充完善Dota2词库，包含所有英雄名（中英文）、物品装备、技能等
+- ✅ 优化翻译逻辑，解决词汇被错误分割的问题（如black king bar被错误翻译）
+- ✅ 添加占位符保护机制，确保翻译准确性
+
 ## 功能特点
 
 - ✅ **现代化GUI界面** - 告别黑窗口，美观易用
@@ -64,16 +71,17 @@ python src/dota2_translator_gui.py
 ```
 dota2/
 ├── src/
-│   └── dota2_translator_gui.py    # GUI主程序
+│   ├── dota2_translator_gui.py    # GUI主程序
+│   └── 词汇表.py                   # Dota2词库（可自定义）
 ├── dist/
 │   └── Dota2_Translator_GUI.exe    # 打包好的EXE
 ├── config.example.json              # 配置模板
 ├── requirements.txt                 # Python依赖
-├── start_gui.bat                    # 启动脚本
-├── build_gui.bat                    # 打包脚本
-├── .gitignore                       # Git忽略规则
-├── EXE_USAGE.md                     # EXE使用说明
-└── README.md                        # 本文档
+├── start_gui.bat                   # 启动脚本
+├── build_gui.bat                   # 打包脚本
+├── 词库.txt                        # 原始词库参考
+├── EXE_USAGE.md                    # EXE使用说明
+└── README.md                       # 本文档
 ```
 
 ## 配置说明
