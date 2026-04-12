@@ -7,14 +7,14 @@ echo   现代化界面 + 系统托盘支持 + 严格模式
 echo ============================================
 echo.
 
-set PYTHON_EXE=C:\Users\dy\AppData\Local\Programs\Python\Python314\python.exe
-
-if not exist "%PYTHON_EXE%" (
-    echo [错误] 未找到Python: %PYTHON_EXE%
-    echo 请先安装Python
+REM 检查 Python 是否可用
+python --version >nul 2>&1
+if errorlevel 1 (
+    echo [错误] 未找到Python，请先安装Python并添加到PATH
     pause
     exit /b 1
 )
 
-"%PYTHON_EXE%" src\dota2_translator_gui.py
+echo [信息] 启动翻译器...
+python src\dota2_translator_gui.py
 pause

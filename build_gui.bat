@@ -2,26 +2,24 @@
 chcp 65001 >nul
 title Dota 2 翻译器 - GUI版打包工具
 
-set PYTHON_EXE=C:\Users\dy\AppData\Local\Programs\Python\Python314\python.exe
-
 echo ============================================
 echo   Dota 2 中文翻译器 - GUI版打包工具
 echo ============================================
 echo.
 
-REM 检查并安装pip
-echo [信息] 检查pip...
-if not exist "%PYTHON_EXE%" (
-    echo [错误] 未找到Python，请先安装Python
+REM 检查 Python 是否可用
+python --version >nul 2>&1
+if errorlevel 1 (
+    echo [错误] 未找到Python，请先安装Python并添加到PATH
     pause
     exit /b 1
 )
 
 REM 检查 PyInstaller 是否安装
-"%PYTHON_EXE%" -c "import PyInstaller" 2>nul
+python -c "import PyInstaller" 2>nul
 if errorlevel 1 (
     echo [信息] 正在安装PyInstaller...
-    "%PYTHON_EXE%" -m pip install pyinstaller
+    python -m pip install pyinstaller
     if errorlevel 1 (
         echo [错误] 安装PyInstaller失败！
         pause
@@ -46,10 +44,9 @@ REM 执行打包 - GUI版本使用--windowed隐藏控制台
 echo [打包] 正在生成 GUI 版本 EXE 文件...
 echo.
 
-"%PYTHON_EXE%" -m PyInstaller --noconfirm --onefile --windowed ^
-    --name "Dota2_Translator_GUI" ^
+python -m PyInstaller --noconfirm --onefile --windowed ^
+    --name "Dota2Translator" ^
     --icon=NONE ^
-    --add-data "config.example.json;." ^
     --hidden-import=pystray ^
     --hidden-import=PIL ^
     --hidden-import=PIL.Image ^
@@ -67,7 +64,7 @@ echo ============================================
 echo   ✓ GUI版本打包成功！
 echo ============================================
 echo.
-echo 输出文件: dist\Dota2_Translator_GUI.exe
+echo 输出文件: dist\Dota2Translator.exe
 echo.
 echo 特性:
 echo   • 现代化GUI界面
