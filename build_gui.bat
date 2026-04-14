@@ -47,9 +47,42 @@ echo.
 python -m PyInstaller --noconfirm --onefile --windowed ^
     --name "Dota2Translator" ^
     --icon=NONE ^
-    --hidden-import=pystray ^
-    --hidden-import=PIL ^
-    --hidden-import=PIL.Image ^
+    --add-data "src\1.png;." ^
+    --add-data "src\词汇表.py;." ^
+    --runtime-hook=runtime_hook.py ^
+    --collect-all=paddleocr ^
+    --collect-all=paddle ^
+    --collect-all=Cython ^
+    --collect-all=skimage ^
+    --collect-all=shapely ^
+    --collect-all=imgaug ^
+    --collect-all=imageio ^
+    --collect-all=lmdb ^
+    --collect-all=lxml ^
+    --collect-all=opencv ^
+    --collect-all=PIL ^
+    --collect-all=tqdm ^
+    --collect-all=numpy ^
+    --collect-all=pyclipper ^
+    --collect-all=rapidfuzz ^
+    --collect-all=attrdict ^
+    --collect-all=beautifulsoup4 ^
+    --collect-all=fonttools ^
+    --collect-all=fire ^
+    --collect-all=premailer ^
+    --collect-all=openpyxl ^
+    --collect-all=python-docx ^
+    --collect-all=pyyaml ^
+    --collect-all=visualdl ^
+    --collect-all=imghdr ^
+    --hidden-import=shutil ^
+    --hidden-import=io ^
+    --hidden-import=packaging ^
+    --hidden-import=collections.abc ^
+    --hidden-import=contextlib ^
+    --hidden-import=dataclasses ^
+    --hidden-import=imghdr ^
+    --hidden-import=multiprocessing ^
     src/dota2_translator_gui.py
 
 if errorlevel 1 (
@@ -72,5 +105,6 @@ echo   • 可最小化到系统托盘
 echo   • 实时日志显示
 echo   • 一键设置触发键
 echo   • 严格模式悬浮窗
+echo   • 运行时自动下载OCR模型
 echo.
 pause

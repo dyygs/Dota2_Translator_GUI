@@ -36,6 +36,9 @@ ENV/
 # Project specific
 config.json
 *.spec
+AI_INSTRUCTIONS.md
+UI_LAYOUT.md
+models/
 
 # OS
 .DS_Store
