@@ -5,7 +5,7 @@ Dota 2 中文→英文翻译器 - GUI版本
 版本：1.2.0
 """
 
-VERSION = "2.0.0"
+VERSION = "2.2.0"
 
 import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox
@@ -93,8 +93,8 @@ class Config:
                 with open(self.CONFIG_FILE, 'r', encoding='utf-8') as f:
                     file_config = json.load(f)
                     self.config.update(file_config)
-            except:
-                pass
+            except Exception as e:
+                print(f"加载配置文件失败: {e}")
 
     def save_config(self):
         try:
@@ -584,48 +584,52 @@ class RealtimeTranslator:
         except Exception as e:
             self.log(f"加载paddleocr失败: {e}")
             return False
-        
+
         import os
-        paddleocr_dir = os.path.expanduser("~/.paddleocr")
-        model_ready = os.path.exists(os.path.join(paddleocr_dir, "en_PP-OCRv3_det_infer")) or \
-                     os.path.exists(os.path.join(paddleocr_dir, "en_PP-OCRv3_rec_infer")) or \
-                     os.path.exists(os.path.join(paddleocr_dir, "ocr_v2.0_en_det")) or \
-                     os.path.exists(os.path.join(paddleocr_dir, "ocr_v2_en_det")) or \
-                     os.path.exists(os.path.join(paddleocr_dir, "det"))
+        paddleocr_dir = r"D:\Dota2Translator\models"
+
+        model_files = [
+            "en_PP-OCRv3_det_infer.pdmodel",
+            "en_PP-OCRv3_det_infer.pdiparams",
+            "en_PP-OCRv3_rec_infer.pdmodel",
+            "en_PP-OCRv3_rec_infer.pdiparams",
+            "ch_PP-OCRv3_cls_infer.pdmodel",
+            "ch_PP-OCRv3_cls_infer.pdiparams",
+        ]
+
+        model_ready = all(os.path.exists(os.path.join(paddleocr_dir, f)) for f in model_files)
 
         if not model_ready:
             self.log("未检测到OCR模型，即将下载...")
             self.log("下载模型大约需要30MB，请耐心等待...")
-            import urllib.request
-            import tarfile
 
             try:
-                det_url = "https://paddleocr.bj.bcebos.com/PP-OCRv3/english/en_PP-OCRv3_det_infer.tar"
-                tar_path = os.path.join(tempfile.gettempdir(), "en_PP-OCRv3_det.tar")
-                self.log("下载检测模型...")
-                urllib.request.urlretrieve(det_url, tar_path)
-                extract_dir = paddleocr_dir
-                with tarfile.open(tar_path, 'r') as tar:
-                    tar.extractall(extract_dir)
-                os.remove(tar_path)
+                checker = EnvironmentChecker()
+                download_success = True
 
-                rec_url = "https://paddleocr.bj.bcebos.com/PP-OCRv3/english/en_PP-OCRv3_rec_infer.tar"
-                rec_tar_path = os.path.join(tempfile.gettempdir(), "en_PP-OCRv3_rec.tar")
-                self.log("下载识别模型...")
-                urllib.request.urlretrieve(rec_url, rec_tar_path)
-                with tarfile.open(rec_tar_path, 'r') as tar:
-                    tar.extractall(extract_dir)
-                os.remove(rec_tar_path)
+                if not os.path.exists(os.path.join(paddleocr_dir, "en_PP-OCRv3_det_infer.pdmodel")):
+                    self.log("下载检测模型...")
+                    if not checker.download_model("det_model"):
+                        download_success = False
 
-                cls_url = "https://paddleocr.bj.bcebos.com/dygraph_v2.0/ch/ch_ppocr_mobile_v2.0_cls_infer.tar"
-                cls_tar_path = os.path.join(tempfile.gettempdir(), "angle_cls.tar")
-                self.log("下载方向分类模型...")
-                urllib.request.urlretrieve(cls_url, cls_tar_path)
-                with tarfile.open(cls_tar_path, 'r') as tar:
-                    tar.extractall(extract_dir)
-                os.remove(cls_tar_path)
+                if download_success and not os.path.exists(os.path.join(paddleocr_dir, "en_PP-OCRv3_rec_infer.pdmodel")):
+                    self.log("下载识别模型...")
+                    if not checker.download_model("rec_model"):
+                        download_success = False
 
-                self.log("OCR模型下载完成！")
+                if download_success and not os.path.exists(os.path.join(paddleocr_dir, "ch_PP-OCRv3_cls_infer.pdmodel")):
+                    self.log("下载方向分类模型...")
+                    if not checker.download_model("cls_model"):
+                        download_success = False
+
+                if download_success:
+                    self.log("OCR模型下载完成！")
+                else:
+                    self.log("部分模型下载失败，请检查网络连接后重试")
+                    self.ocr_available = False
+                    self._ocr_error = "模型下载失败"
+                    return False
+
             except Exception as download_error:
                 self.log(f"模型下载失败: {download_error}")
                 self.log("请检查网络连接后重试，或手动下载模型到 ~/.paddleocr 目录")
@@ -635,7 +639,6 @@ class RealtimeTranslator:
 
         try:
             self.log("正在加载OCR模型...")
-            import os
             os.environ['GLOG_minloglevel'] = '2'
             os.environ['FLAGS_eager_delete_tensor_gb'] = '0.0'
             self.ocr = PaddleOCR(

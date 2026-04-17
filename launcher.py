@@ -16,7 +16,7 @@ from tkinter import ttk, scrolledtext
 import threading
 import time
 
-VERSION = "2.0.0"
+VERSION = "2.2.0"
 
 _main_process = None
 
@@ -253,7 +253,8 @@ def find_system_python():
             ver_output = result.stdout.decode('utf-8', errors='ignore') + result.stderr.decode('utf-8', errors='ignore')
             if '3.11.9' in ver_output:
                 return d_python
-        except:
+        except Exception as e:
+            log(f"检查D盘Python版本失败: {e}")
             pass
     
     # 尝试从PATH中查找
@@ -270,9 +271,11 @@ def find_system_python():
                         ver_output = ver_result.stdout.decode('utf-8', errors='ignore') + ver_result.stderr.decode('utf-8', errors='ignore')
                         if '3.11.9' in ver_output:
                             return p
-                    except:
+                    except Exception as e:
+                        log(f"检查PATH中Python版本失败: {e}")
                         continue
-    except:
+    except Exception as e:
+        log(f"从PATH查找Python失败: {e}")
         pass
     
     # 尝试常见路径（使用环境变量）
@@ -287,9 +290,10 @@ def find_system_python():
                     ver_output = ver_result.stdout.decode('utf-8', errors='ignore') + ver_result.stderr.decode('utf-8', errors='ignore')
                     if '3.11.9' in ver_output:
                         return path
-                except:
+                except Exception as e:
+                    log(f"检查C盘Python版本失败 ({ver}): {e}")
                     continue
-    
+
     return None
 
 def install_python(runtime_dir, log):
@@ -492,16 +496,16 @@ def check_and_setup_environment(log_func=None):
     
     # 3. 检查/安装依赖
     deps = [
-        ("numpy", "numpy"),
-        ("cv2", "opencv-python"),
-        ("PIL", "pillow"),
-        ("paddle", "paddlepaddle"),
-        ("paddleocr", "paddleocr"),
-        ("keyboard", "keyboard"),
-        ("pyperclip", "pyperclip"),
-        ("pyautogui", "pyautogui"),
-        ("requests", "requests"),
-        ("mss", "mss"),
+        ("numpy", "numpy<2.0.0"),
+        ("cv2", "opencv-python<=4.6.0.66"),
+        ("PIL", "pillow>=9.0.0"),
+        ("paddle", "paddlepaddle==2.6.2"),
+        ("paddleocr", "paddleocr==2.7.34"),
+        ("keyboard", "keyboard==0.13.5"),
+        ("pyperclip", "pyperclip==1.8.2"),
+        ("pyautogui", "pyautogui==0.9.54"),
+        ("requests", "requests>=2.32.0"),
+        ("mss", "mss>=9.0.0"),
     ]
     
     # 设置环境变量
@@ -511,68 +515,78 @@ def check_and_setup_environment(log_func=None):
     env = os.environ.copy()
     # 使用系统临时目录避免长路径问题
     import tempfile
+    import shutil
     temp_dir = tempfile.mkdtemp(prefix="dota2_")
     env["TEMP"] = temp_dir
     env["TMP"] = temp_dir
     log(f"临时目录: {temp_dir}")
-    
-    # 逐项检查并安装依赖
-    total_deps = len(deps)
-    installed_count = 0
-    skipped_count = 0
-    
-    for idx, (module_name, pkg_name) in enumerate(deps):
-        progress = f"[{idx+1}/{total_deps}]"
-        log(f"检查依赖 {progress} {pkg_name}...")
-        
-        # 检查是否已安装
-        if check_dependency_installed(runtime_dir, module_name):
-            log(f"  {pkg_name} 已安装，跳过")
-            skipped_count += 1
-            continue
-        
-        log(f"  {pkg_name} 未安装，正在安装 {progress}...")
-        
-        # 选择合适的镜像
-        if pkg_name == "paddlepaddle":
-            mirror_list = MIRRORS["paddlepaddle"]
-        else:
-            mirror_list = MIRRORS["pip"]
-        
-        # 尝试多个镜像安装
-        installed = False
-        last_error = ""
-        for mirror in mirror_list:
-            success, error = install_dependency(runtime_dir, module_name, pkg_name, mirror, log, env)
-            if success:
-                log(f"  {pkg_name} 安装成功 {progress}")
-                installed = True
-                installed_count += 1
-                break
+
+    try:
+        # 逐项检查并安装依赖
+        total_deps = len(deps)
+        installed_count = 0
+        skipped_count = 0
+
+        for idx, (module_name, pkg_name) in enumerate(deps):
+            progress = f"[{idx+1}/{total_deps}]"
+            log(f"检查依赖 {progress} {pkg_name}...")
+
+            # 检查是否已安装
+            if check_dependency_installed(runtime_dir, module_name):
+                log(f"  {pkg_name} 已安装，跳过")
+                skipped_count += 1
+                continue
+
+            log(f"  {pkg_name} 未安装，正在安装 {progress}...")
+
+            # 选择合适的镜像
+            if pkg_name == "paddlepaddle":
+                mirror_list = MIRRORS["paddlepaddle"]
             else:
-                last_error = error
-                log(f"  {mirror[:25]}... 失败: {error[:80]}")
-        
-        if not installed:
-            log(f"  {pkg_name} 安装失败: {last_error[:150]}")
-            log("=" * 50)
-            log(f"环境初始化失败: {pkg_name} 安装失败")
-            log("=" * 50)
-            return False
-    
-    # 总结
-    log("=" * 50)
-    log(f"依赖检查完成: {skipped_count}个已存在, {installed_count}个新安装, {total_deps}个总计")
-    log("=" * 50)
-    
-    log("环境初始化完成!")
-    log_to_file("环境初始化完成!")
-    
-    # 保存检查结果
-    python_path = find_system_python()
-    save_check_result(True, python_path or "")
-    
-    return True
+                mirror_list = MIRRORS["pip"]
+
+            # 尝试多个镜像安装
+            installed = False
+            last_error = ""
+            for mirror in mirror_list:
+                success, error = install_dependency(runtime_dir, module_name, pkg_name, mirror, log, env)
+                if success:
+                    log(f"  {pkg_name} 安装成功 {progress}")
+                    installed = True
+                    installed_count += 1
+                    break
+                else:
+                    last_error = error
+                    log(f"  {mirror[:25]}... 失败: {error[:80]}")
+
+            if not installed:
+                log(f"  {pkg_name} 安装失败: {last_error[:150]}")
+                log("=" * 50)
+                log(f"环境初始化失败: {pkg_name} 安装失败")
+                log("=" * 50)
+                return False
+
+        # 总结
+        log("=" * 50)
+        log(f"依赖检查完成: {skipped_count}个已存在, {installed_count}个新安装, {total_deps}个总计")
+        log("=" * 50)
+
+        log("环境初始化完成!")
+        log_to_file("环境初始化完成!")
+
+        # 保存检查结果
+        python_path = find_system_python()
+        save_check_result(True, python_path or "")
+
+        return True
+    finally:
+        # 清理临时目录
+        if 'temp_dir' in locals() and os.path.exists(temp_dir):
+            try:
+                shutil.rmtree(temp_dir, ignore_errors=True)
+                log(f"临时目录已清理: {temp_dir}")
+            except Exception as e:
+                log(f"清理临时目录失败: {e}")
 
 def run_main_program():
     """运行主程序"""

@@ -127,6 +127,7 @@ class EnvironmentChecker:
     def get_python_exe_path(self) -> Optional[str]:
         """获取Python运行时路径"""
         possible_paths = [
+            r"D:\Dota2Translator\python\python.exe",
             os.path.join(self.app_root, "runtime", "python.exe"),
             os.path.join(self.app_root, "runtime", "python3.exe"),
             os.path.join(self.app_root, "python.exe"),
@@ -214,9 +215,8 @@ class EnvironmentChecker:
 
     def get_paddleocr_model_dir(self) -> str:
         """获取PaddleOCR模型目录"""
-        if hasattr(os.path, 'expanduser'):
-            return os.path.expanduser("~/.paddleocr")
-        return os.path.join(os.environ.get('USERPROFILE', ''), '.paddleocr')
+        model_dir = r"D:\Dota2Translator\models"
+        return model_dir
 
     def check_model_file(self, model_key: str) -> Tuple[CheckResult, List[str]]:
         """检查单个模型组"""
