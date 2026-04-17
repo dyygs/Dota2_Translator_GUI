@@ -500,7 +500,7 @@ def check_and_setup_environment(log_func=None):
         ("cv2", "opencv-python<=4.6.0.66"),
         ("PIL", "pillow>=9.0.0"),
         ("paddle", "paddlepaddle==2.6.2"),
-        ("paddleocr", "paddleocr==2.7.34"),
+        ("paddleocr", "paddleocr>=2.7.0,<3.0.0"),
         ("keyboard", "keyboard==0.13.5"),
         ("pyperclip", "pyperclip==1.8.2"),
         ("pyautogui", "pyautogui==0.9.54"),

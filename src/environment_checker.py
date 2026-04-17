@@ -45,7 +45,7 @@ class EnvironmentChecker:
     ]
 
     PIP_PACKAGES = {
-        "paddleocr": "paddleocr==2.7.34",
+        "paddleocr": "paddleocr>=2.7.0,<3.0.0",
         "paddlepaddle": "paddlepaddle==2.6.2",
         "opencv-python": "opencv-python<=4.6.0.66",
         "numpy": "numpy<2.0.0",
