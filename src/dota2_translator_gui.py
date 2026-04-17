@@ -25,10 +25,29 @@ import webbrowser
 from PIL import Image, ImageDraw, ImageTk
 import ctypes
 
+# 导入新的翻译系统
+Dota2TranslationSystem = None
+_current_dir = os.path.dirname(os.path.abspath(__file__))
+_parent_dir = os.path.dirname(_current_dir)
+for _p in [_current_dir, _parent_dir]:
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
 try:
-    from src.词汇表 import ZH_TO_EN, EN_TO_ZH
+    from dota2_translation_system import Dota2TranslationSystem
 except ImportError:
-    from 词汇表 import ZH_TO_EN, EN_TO_ZH
+    try:
+        from src.dota2_translation_system import Dota2TranslationSystem
+    except ImportError:
+        pass
+
+try:
+    from environment_checker import EnvironmentChecker
+except ImportError:
+    try:
+        from src.environment_checker import EnvironmentChecker
+    except ImportError:
+        pass
 
 def get_resource_path(relative_path):
     if getattr(sys, 'frozen', False):
@@ -44,7 +63,7 @@ class Config:
         "cooldown": 0.2,
         "source_lang": "zh-CN",
         "target_lang": "en",
-        "strict_mode_enabled": False,
+        "strict_mode_enabled": True,
         "strict_mode_position": "",
         "realtime_enabled": False,
         "realtime_hotkey": "f7",
@@ -531,9 +550,10 @@ class DanmakuWindow:
                 y_offset += msg_height + 5  # 消息之间留5像素间隔
 
 class RealtimeTranslator:
-    def __init__(self, config, engine, on_new_message, log_callback):
+    def __init__(self, config, zh_to_en_engine, en_to_zh_engine, on_new_message, log_callback):
         self.config = config
-        self.engine = engine
+        self.zh_to_en_engine = zh_to_en_engine  # 中文→英文
+        self.en_to_zh_engine = en_to_zh_engine  # 英文→中文
         self.on_new_message = on_new_message
         self.log = log_callback
         self.running = False
@@ -542,7 +562,6 @@ class RealtimeTranslator:
         self.last_img_hash = None  # 上次截图的hash
         self.ocr_available = False
         self.ocr = None
-        self.en_to_zh_engine = TranslationEngine(mode=2)
         # 识别结果缓存（最近10条）
         self.text_cache = []
         self.max_cache_size = 10
@@ -559,62 +578,69 @@ class RealtimeTranslator:
             return True
         try:
             from paddleocr import PaddleOCR
-            import os
+        except ImportError as e:
+            self.log(f"paddleocr未安装: {e}")
+            return False
+        except Exception as e:
+            self.log(f"加载paddleocr失败: {e}")
+            return False
+        
+        import os
+        paddleocr_dir = os.path.expanduser("~/.paddleocr")
+        model_ready = os.path.exists(os.path.join(paddleocr_dir, "en_PP-OCRv3_det_infer")) or \
+                     os.path.exists(os.path.join(paddleocr_dir, "en_PP-OCRv3_rec_infer")) or \
+                     os.path.exists(os.path.join(paddleocr_dir, "ocr_v2.0_en_det")) or \
+                     os.path.exists(os.path.join(paddleocr_dir, "ocr_v2_en_det")) or \
+                     os.path.exists(os.path.join(paddleocr_dir, "det"))
 
-            paddleocr_dir = os.path.expanduser("~/.paddleocr")
-            model_ready = os.path.exists(os.path.join(paddleocr_dir, "en_PP-OCRv3_det_infer")) or \
-                         os.path.exists(os.path.join(paddleocr_dir, "en_PP-OCRv3_rec_infer")) or \
-                         os.path.exists(os.path.join(paddleocr_dir, "ocr_v2.0_en_det")) or \
-                         os.path.exists(os.path.join(paddleocr_dir, "ocr_v2_en_det")) or \
-                         os.path.exists(os.path.join(paddleocr_dir, "det"))
+        if not model_ready:
+            self.log("未检测到OCR模型，即将下载...")
+            self.log("下载模型大约需要30MB，请耐心等待...")
+            import urllib.request
+            import tarfile
 
-            if not model_ready:
-                self.log("未检测到OCR模型，即将下载...")
-                self.log("下载模型大约需要30MB，请耐心等待...")
-                import urllib.request
-                import tarfile
+            try:
+                det_url = "https://paddleocr.bj.bcebos.com/PP-OCRv3/english/en_PP-OCRv3_det_infer.tar"
+                tar_path = os.path.join(tempfile.gettempdir(), "en_PP-OCRv3_det.tar")
+                self.log("下载检测模型...")
+                urllib.request.urlretrieve(det_url, tar_path)
+                extract_dir = paddleocr_dir
+                with tarfile.open(tar_path, 'r') as tar:
+                    tar.extractall(extract_dir)
+                os.remove(tar_path)
 
-                try:
-                    det_url = "https://paddleocr.bj.bcebos.com/PP-OCRv3/english/en_PP-OCRv3_det_infer.tar"
-                    tar_path = os.path.join(tempfile.gettempdir(), "en_PP-OCRv3_det.tar")
-                    self.log("下载检测模型...")
-                    urllib.request.urlretrieve(det_url, tar_path)
-                    extract_dir = paddleocr_dir
-                    with tarfile.open(tar_path, 'r') as tar:
-                        tar.extractall(extract_dir)
-                    os.remove(tar_path)
+                rec_url = "https://paddleocr.bj.bcebos.com/PP-OCRv3/english/en_PP-OCRv3_rec_infer.tar"
+                rec_tar_path = os.path.join(tempfile.gettempdir(), "en_PP-OCRv3_rec.tar")
+                self.log("下载识别模型...")
+                urllib.request.urlretrieve(rec_url, rec_tar_path)
+                with tarfile.open(rec_tar_path, 'r') as tar:
+                    tar.extractall(extract_dir)
+                os.remove(rec_tar_path)
 
-                    rec_url = "https://paddleocr.bj.bcebos.com/PP-OCRv3/english/en_PP-OCRv3_rec_infer.tar"
-                    rec_tar_path = os.path.join(tempfile.gettempdir(), "en_PP-OCRv3_rec.tar")
-                    self.log("下载识别模型...")
-                    urllib.request.urlretrieve(rec_url, rec_tar_path)
-                    with tarfile.open(rec_tar_path, 'r') as tar:
-                        tar.extractall(extract_dir)
-                    os.remove(rec_tar_path)
+                cls_url = "https://paddleocr.bj.bcebos.com/dygraph_v2.0/ch/ch_ppocr_mobile_v2.0_cls_infer.tar"
+                cls_tar_path = os.path.join(tempfile.gettempdir(), "angle_cls.tar")
+                self.log("下载方向分类模型...")
+                urllib.request.urlretrieve(cls_url, cls_tar_path)
+                with tarfile.open(cls_tar_path, 'r') as tar:
+                    tar.extractall(extract_dir)
+                os.remove(cls_tar_path)
 
-                    cls_url = "https://paddleocr.bj.bcebos.com/dygraph_v2.0/ch/ch_ppocr_mobile_v2.0_cls_infer.tar"
-                    cls_tar_path = os.path.join(tempfile.gettempdir(), "angle_cls.tar")
-                    self.log("下载方向分类模型...")
-                    urllib.request.urlretrieve(cls_url, cls_tar_path)
-                    with tarfile.open(cls_tar_path, 'r') as tar:
-                        tar.extractall(extract_dir)
-                    os.remove(cls_tar_path)
+                self.log("OCR模型下载完成！")
+            except Exception as download_error:
+                self.log(f"模型下载失败: {download_error}")
+                self.log("请检查网络连接后重试，或手动下载模型到 ~/.paddleocr 目录")
+                self.ocr_available = False
+                self._ocr_error = str(download_error)
+                return False
 
-                    self.log("OCR模型下载完成！")
-                except Exception as download_error:
-                    self.log(f"模型下载失败: {download_error}")
-                    self.log("请检查网络连接后重试，或手动下载模型到 ~/.paddleocr 目录")
-                    self.ocr_available = False
-                    self._ocr_error = str(download_error)
-                    return False
-
+        try:
             self.log("正在加载OCR模型...")
-
+            import os
+            os.environ['GLOG_minloglevel'] = '2'
+            os.environ['FLAGS_eager_delete_tensor_gb'] = '0.0'
             self.ocr = PaddleOCR(
                 use_textline_orientation=True,
-                lang='en',
-                use_angle_cls=True,
-                show_log=False
+                lang='en'
             )
             self.ocr_available = True
             self.log("OCR模型加载成功")
@@ -772,143 +798,27 @@ class RealtimeTranslator:
 
 class TranslationEngine:
     def __init__(self, mode=1):
-        self.cache = {}
-        self.session = requests.Session()
         self.mode = mode
-        if mode == 1:
-            self.terms = ZH_TO_EN
-        else:
-            self.terms = EN_TO_ZH
-        self._sorted_terms = sorted(self.terms.keys(), key=len, reverse=True)
+        self._system = None
 
-    def replace_chinese_terms(self, text: str) -> tuple:
-        return text, {}
-
-    def restore_placeholders(self, text: str, placeholders: dict) -> str:
-        return text
-
-    def restore_dota_terms(self, text: str) -> str:
-        text = re.sub(r'\beye\b', 'ward', text, flags=re.IGNORECASE)
-        text = re.sub(r'\beyes\b', 'ward', text, flags=re.IGNORECASE)
-        text = re.sub(r'\bfog\b', 'smoke', text, flags=re.IGNORECASE)
-        return text
-
-    def apply_dota_terms_zh(self, translated: str, original: str) -> str:
-        """英译中后处理：将英文术语替换为中文"""
-        try:
-            from 词汇表 import EN_TO_ZH
-
-            # 合并原文和翻译结果，确保所有词都被处理
-            combined_text = f"{original} {translated}".lower()
-
-            # 使用EN_TO_ZH词汇表替换（按长度从长到短，避免短词先替换）
-            for en_term, cn_term in sorted(EN_TO_ZH.items(), key=lambda x: len(x[0]), reverse=True):
-                if en_term in combined_text:
-                    translated = re.sub(r'\b' + re.escape(en_term) + r'\b', cn_term, translated, flags=re.IGNORECASE)
-                    # 同时也在原文中替换（用于后面检查）
-                    original = re.sub(r'\b' + re.escape(en_term) + r'\b', cn_term, original, flags=re.IGNORECASE)
-
-
-        except Exception as e:
-            pass
-
-        return translated
+        if Dota2TranslationSystem:
+            try:
+                self._system = Dota2TranslationSystem(mode=mode)
+            except Exception as e:
+                raise
 
     def translate(self, text: str, email: str = None) -> str:
-        if not text.strip():
+        if not text or not text.strip():
             return text
 
-        if self.mode == 1:
-            has_chinese = re.search(r'[\u4e00-\u9fff]', text) is not None
-            if not has_chinese:
+        if self._system:
+            try:
+                result, _ = self._system.translate(text)
+                return result if result else text
+            except Exception as e:
                 return text
-            source_lang, target_lang = 'zh-CN', 'en'
-        else:
-            has_english = re.search(r'[a-zA-Z]', text) is not None
-            if not has_english:
-                return text
-            source_lang, target_lang = 'en', 'zh-CN'
-
-        cache_key = hashlib.md5(f"{self.mode}:{text}".encode()).hexdigest()
-        if cache_key in self.cache:
-            return self.cache[cache_key]
-
-        # 先检查词汇表是否有直接匹配
-        if self.mode == 2:  # 英译中模式
-            text_lower = text.lower().strip()
-            if text_lower in self.terms:
-                direct_translation = self.terms[text_lower]
-                self.cache[cache_key] = direct_translation
-                return direct_translation
-
-        text_with_placeholders, placeholders = self.replace_chinese_terms(text)
-
-        try:
-            url = "https://api.mymemory.translated.net/get"
-            params = {'q': text_with_placeholders, 'langpair': f'{source_lang}|{target_lang}'}
-            # 如果提供了邮箱，添加到请求参数中
-            if email:
-                params['de'] = email
-            resp = self.session.get(url, params=params, timeout=10)
-            result = resp.json()
-
-            if result.get('responseStatus') == 200:
-                # 从matches中选择最佳翻译（优先选择完整翻译且非原文的）
-                matches = result.get('matches', [])
-                best_translation = None
-
-                for match in matches:
-                    translation = match.get('translation', '')
-                    segment = match.get('segment', '')
-                    # 只选择segment与原文相同的完整翻译
-                    if translation and segment.lower() == text_with_placeholders.lower():
-                        if translation.lower() != text_with_placeholders.lower():
-                            best_translation = translation
-                            break
-
-                # 如果没有找到合适的翻译，使用responseData中的翻译
-                if not best_translation:
-                    best_translation = result['responseData']['translatedText']
-
-                # 检查翻译是否完整（对于英译中，检查是否包含中文；对于中译英，检查是否有有效翻译）
-                if best_translation:
-                    if self.mode == 2:  # 英译中
-                        has_chinese = re.search(r'[\u4e00-\u9fff]', best_translation) is not None
-                        too_short = len(best_translation) < len(text) * 0.5
-                        if too_short or not has_chinese:
-                            translated = text
-                        else:
-                            translated = best_translation
-                    else:  # 中译英
-                        if len(best_translation) < 1:
-                            translated = text
-                        else:
-                            translated = best_translation
-                else:
-                    translated = text
-
-                # 无论API返回什么，都进行词汇表后处理
-                translated = self.restore_placeholders(translated, placeholders)
-                if self.mode == 1:
-                    translated = self.restore_dota_terms(translated)
-                else:
-                    # 英译中：术语词典后处理
-                    translated = self.apply_dota_terms_zh(translated, text)
-
-                # 如果翻译结果与原文相同，尝试词汇表替换
-                if translated.lower() == text.lower().strip():
-                    text_lower = text.lower().strip()
-                    if text_lower in self.terms:
-                        translated = self.terms[text_lower]
-
-                self.cache[cache_key] = translated
-                return translated
-            else:
-                pass  # API错误静默处理
-        except Exception as e:
-            pass
-
         return text
+
 
 class Dota2TranslatorGUI:
     def __init__(self):
@@ -930,7 +840,7 @@ class Dota2TranslatorGUI:
         self.tray_icon = None
         self.is_minimized = False
         self.strict_mode_window = StrictModeWindow(self.strict_mode_translate, self.config)
-        self.strict_mode_enabled = self.config.get('strict_mode_enabled', False)
+        self.strict_mode_enabled = self.config.get('strict_mode_enabled', True)
 
         self.region_selector = None
         self.danmaku_window = DanmakuWindow(self.config, self.handle_danmaku_position, self.root)
@@ -952,7 +862,8 @@ class Dota2TranslatorGUI:
         
         self.realtime_translator = RealtimeTranslator(
             self.config,
-            self.realtime_engine,
+            self.engine,  # 中文→英文
+            self.realtime_engine,  # 英文→中文
             self.on_realtime_message,
             self.log
         )
@@ -1013,7 +924,7 @@ class Dota2TranslatorGUI:
         ttk.Label(status_row, textvariable=self.realtime_status_var, foreground='#95a5a6', font=('Microsoft YaHei UI', 9, 'bold')).pack(side=tk.LEFT, padx=5)
         
         ttk.Label(status_row, text="| 翻译库:").pack(side=tk.LEFT, padx=5)
-        ttk.Label(status_row, text="MyMemory", foreground='#9b59b6', font=('Microsoft YaHei UI', 9, 'bold')).pack(side=tk.LEFT, padx=5)
+        ttk.Label(status_row, text="DeepLX", foreground='#9b59b6', font=('Microsoft YaHei UI', 9, 'bold')).pack(side=tk.LEFT, padx=5)
         
         ttk.Label(status_row, text="| 邮箱:").pack(side=tk.LEFT, padx=5)
         self.email_status_display_var = tk.StringVar(value="未设置")
@@ -1205,8 +1116,8 @@ class Dota2TranslatorGUI:
 
             text = pyperclip.paste()
 
-            if text and re.search(r'[\u4e00-\u9fff]', text):
-                translated = self.engine.translate(text)
+            if text and re.search(r'[a-zA-Z]', text):
+                translated = self.en_to_zh_engine.translate(text)
 
                 if translated and translated != text:
                     pyperclip.copy(translated)
@@ -1229,6 +1140,7 @@ class Dota2TranslatorGUI:
             return ""
         if not text.strip():
             return ""
+
         result = self.engine.translate(text)
         self.log(f"严格模式翻译: {text} → {result}")
         return result
@@ -1440,6 +1352,268 @@ class Dota2TranslatorGUI:
     def run(self):
         self.root.mainloop()
 
+def check_environment_background(app):
+    """后台检查环境"""
+    import threading
+    import urllib.request
+    import zipfile
+    import subprocess
+    import time
+
+    app_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    runtime_dir = os.path.join(app_root, "runtime")
+    init_file = os.path.join(app_root, "init_done.txt")
+
+    # 创建日志文本框（如果不存在）
+    log_text = None
+    for widget in app.root.winfo_children():
+        if isinstance(widget, scrolledtext.ScrolledText):
+            log_text = widget
+            break
+
+    def log(msg):
+        print(f"[环境检查] {msg}")
+        if log_text:
+            try:
+                log_text.insert(tk.END, f"[环境检查] {msg}\n")
+                log_text.see(tk.END)
+                app.root.update()
+            except:
+                pass
+
+    def check_python():
+        """检查Python运行时"""
+        log("检查Python运行时...")
+        python_path = os.path.join(runtime_dir, "python.exe")
+        if not os.path.exists(python_path):
+            log("Python运行时不存在，需要下载")
+            return False
+
+        try:
+            result = subprocess.run([python_path, "--version"], capture_output=True, text=True, timeout=10)
+            if result.returncode == 0:
+                log(f"Python运行时正常: {result.stdout.strip()}")
+                return True
+        except Exception as e:
+            log(f"Python运行时检查失败: {e}")
+            return False
+        return False
+
+    def check_pip():
+        """检查pip"""
+        log("检查pip...")
+        pip_path = os.path.join(runtime_dir, "Scripts", "pip.exe")
+        if not os.path.exists(pip_path):
+            log("pip不存在")
+            return False
+        log("pip已安装")
+        return True
+
+    def check_deps():
+        """检查依赖包"""
+        log("检查依赖包...")
+        deps_to_check = ["paddleocr", "numpy", "PIL", "cv2"]
+        missing = []
+        
+        for dep in deps_to_check:
+            try:
+                __import__(dep)
+                log(f"  {dep}: OK")
+            except:
+                log(f"  {dep}: 缺失")
+                missing.append(dep)
+        
+        return missing
+
+    def download_python():
+        """下载Python嵌入版"""
+        log("开始下载Python嵌入版...")
+        python_url = "https://www.python.org/ftp/python/3.11.9/python-3.11.9-embed-amd64.zip"
+        zip_path = os.path.join(runtime_dir, "python.zip")
+        
+        try:
+            def reporthook(block_num, block_size, total):
+                if total > 0:
+                    percent = min(100, int((block_num * block_size * 100) / total))
+                    if block_num % 50 == 0:
+                        log(f"  下载进度: {percent}%")
+            
+            urllib.request.urlretrieve(python_url, zip_path, reporthook)
+            
+            log("解压Python...")
+            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                zip_ref.extractall(runtime_dir)
+            os.remove(zip_path)
+            log("Python下载完成")
+            return True
+        except Exception as e:
+            log(f"下载Python失败: {e}")
+            return False
+
+    def install_pip():
+        """安装pip"""
+        log("开始安装pip...")
+        try:
+            pip_url = "https://bootstrap.pypa.io/get-pip.py"
+            pip_path = os.path.join(runtime_dir, "get-pip.py")
+            urllib.request.urlretrieve(pip_url, pip_path)
+            
+            result = subprocess.run(
+                [os.path.join(runtime_dir, "python.exe"), pip_path],
+                capture_output=True, timeout=300
+            )
+            os.remove(pip_path)
+            log("pip安装完成")
+            return True
+        except Exception as e:
+            log(f"安装pip失败: {e}")
+            return False
+
+    def install_deps():
+        """安装依赖"""
+        deps = [
+            ("numpy", "numpy<2.0.0"),
+            ("opencv-python", "opencv-python<=4.6.0.66"),
+            ("pillow", "pillow>=9.0.0"),
+            ("paddlepaddle", "paddlepaddle==2.6.2"),
+            ("paddleocr", "paddleocr==2.7.34"),
+            ("keyboard", "keyboard==0.13.5"),
+            ("pyperclip", "pyperclip==1.8.2"),
+            ("pyautogui", "pyautogui==0.9.54"),
+            ("requests", "requests>=2.32.0"),
+            ("mss", "mss>=9.0.0"),
+        ]
+        
+        pip_exe = os.path.join(runtime_dir, "Scripts", "pip.exe")
+        
+        for i, (name, pkg) in enumerate(deps):
+            log(f"安装 {name}...")
+            try:
+                result = subprocess.run(
+                    [pip_exe, "install", pkg, "-i", "https://pypi.tuna.tsinghua.edu.cn/simple", "--no-cache-dir"],
+                    capture_output=True, timeout=600
+                )
+                if result.returncode == 0:
+                    log(f"  {name} 安装成功")
+                else:
+                    log(f"  {name} 安装失败")
+            except Exception as e:
+                log(f"  {name} 安装异常: {e}")
+
+    def run_check():
+        """执行检查"""
+        log("="*30)
+        log("开始环境检查...")
+        log("="*30)
+
+        # 1. 检查Python
+        if not check_python():
+            log("准备下载Python...")
+            if not download_python():
+                log("无法下载Python，初始化失败")
+                return
+
+        # 2. 检查pip
+        if not check_pip():
+            log("准备安装pip...")
+            if not install_pip():
+                log("无法安装pip，初始化失败")
+                return
+
+        # 3. 检查依赖
+        missing = check_deps()
+        if missing:
+            log(f"缺少依赖: {', '.join(missing)}")
+            log("开始安装依赖...")
+            install_deps()
+            
+            # 重新检查
+            missing = check_deps()
+            if missing:
+                log(f"以下依赖仍缺失: {', '.join(missing)}")
+            else:
+                log("所有依赖安装完成!")
+                # 创建完成标记
+                with open(init_file, 'w') as f:
+                    f.write("init_done")
+        else:
+            log("所有依赖已安装!")
+            # 创建完成标记
+            with open(init_file, 'w') as f:
+                f.write("init_done")
+
+        log("环境检查完成!")
+
+    # 后台线程运行检查
+    threading.Thread(target=run_check, daemon=True).start()
+
+def check_and_init_environment_sync():
+    """同步检查环境（在GUI启动前调用）- 仅检查，下载逻辑移至后台"""
+    print("[环境检查] 开始环境检查...")
+
+    app_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    runtime_dir = os.path.join(app_root, "runtime")
+    init_file = os.path.join(app_root, "init_done.txt")
+
+    # 检查是否需要初始化（没有runtime或init文件）
+    need_init = not os.path.exists(init_file)
+
+    if need_init:
+        print("[环境检查] 首次运行，需要初始化环境")
+        print("[环境检查] 请稍候，程序将在后台下载所需依赖...")
+        # 创建标记，表示正在初始化
+        try:
+            os.makedirs(app_root, exist_ok=True)
+            with open(os.path.join(app_root, "init_status.txt"), 'w') as f:
+                f.write("initiating")
+        except:
+            pass
+
+    print("[环境检查] 环境检查完成")
+
 if __name__ == "__main__":
+    # 单实例检测 - 防止崩溃后无限重启
+    import tempfile
+    lock_file = os.path.join(tempfile.gettempdir(), "Dota2Translator.lock")
+
+    # 如果锁文件存在且进程可能已崩溃
+    if os.path.exists(lock_file):
+        import time
+        try:
+            with open(lock_file, 'r') as f:
+                old_pid = int(f.read().strip())
+            import subprocess
+            result = subprocess.run(['tasklist', '/FI', f'PID eq {old_pid}'], capture_output=True, text=True)
+            if str(old_pid) not in result.stdout:
+                try:
+                    os.remove(lock_file)
+                except:
+                    pass
+            else:
+                print("程序已在运行中...")
+                sys.exit(0)
+        except:
+            try:
+                os.remove(lock_file)
+            except:
+                pass
+
+    # 创建锁文件
+    try:
+        with open(lock_file, 'w') as f:
+            f.write(str(os.getpid()))
+    except:
+        pass
+
+    # 启动主程序 - 先检查环境
+    try:
+        check_and_init_environment_sync()
+    except Exception as e:
+        print(f"[环境检查] 检查失败: {e}")
+    
     app = Dota2TranslatorGUI()
+    
+    # 后台检查环境（定期检查）
+    app.root.after(3000, lambda: check_environment_background(app))
+    
     app.run()

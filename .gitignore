@@ -26,6 +26,8 @@ wheels/
 env/
 venv/
 ENV/
+build_env/          # 项目构建虚拟环境
+runtime/            # Python运行时目录
 
 # IDE
 .idea/
@@ -36,9 +38,38 @@ ENV/
 # Project specific
 config.json
 *.spec
-AI_INSTRUCTIONS.md
-UI_LAYOUT.md
 models/
+check_result.txt   # 环境检查缓存
+
+# Old/backup files (ignore - not tracked in git)
+src/词汇表.py
+src/dota2_translation_system_old.py
+
+# Test files (keep latest)
+test_100_diverse.py
+FULL_TEST_REPORT_100_V4_OPTIMIZED.md
+runtime_hook.py
+
+# Other test files (ignore)
+test_*.py
+*_test.py
+debug_test.py
+evaluate_daodi.py
+regression_test_v2.py
+check_*.py
+analyze_*.py
+generate_*.py
+optimized_vocabulary.py
+translation_optimization_plan.py
+compare_results.py
+
+# Reports and logs (ignore other reports)
+完整测试报告_*.txt
+*.log
+init_*.txt          # 临时状态文件
+
+# Downloaded files
+python-*.zip        # Python嵌入版压缩包
 
 # OS
 .DS_Store
