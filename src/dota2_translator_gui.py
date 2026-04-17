@@ -588,16 +588,16 @@ class RealtimeTranslator:
         import os
         paddleocr_dir = r"D:\Dota2Translator\models"
 
-        model_files = [
-            "en_PP-OCRv3_det_infer.pdmodel",
-            "en_PP-OCRv3_det_infer.pdiparams",
-            "en_PP-OCRv3_rec_infer.pdmodel",
-            "en_PP-OCRv3_rec_infer.pdiparams",
-            "ch_PP-OCRv3_cls_infer.pdmodel",
-            "ch_PP-OCRv3_cls_infer.pdiparams",
+        model_dirs = [
+            ("en_PP-OCRv3_det_infer", "inference.pdmodel"),
+            ("en_PP-OCRv3_rec_infer", "inference.pdmodel"),
+            ("ch_ppocr_mobile_v2.0_cls_infer", "inference.pdmodel"),
         ]
 
-        model_ready = all(os.path.exists(os.path.join(paddleocr_dir, f)) for f in model_files)
+        model_ready = all(
+            os.path.exists(os.path.join(paddleocr_dir, dir_name, file_name))
+            for dir_name, file_name in model_dirs
+        )
 
         if not model_ready:
             self.log("未检测到OCR模型，即将下载...")
@@ -607,17 +607,17 @@ class RealtimeTranslator:
                 checker = EnvironmentChecker()
                 download_success = True
 
-                if not os.path.exists(os.path.join(paddleocr_dir, "en_PP-OCRv3_det_infer.pdmodel")):
+                if not os.path.exists(os.path.join(paddleocr_dir, "en_PP-OCRv3_det_infer", "inference.pdmodel")):
                     self.log("下载检测模型...")
                     if not checker.download_model("det_model"):
                         download_success = False
 
-                if download_success and not os.path.exists(os.path.join(paddleocr_dir, "en_PP-OCRv3_rec_infer.pdmodel")):
+                if download_success and not os.path.exists(os.path.join(paddleocr_dir, "en_PP-OCRv3_rec_infer", "inference.pdmodel")):
                     self.log("下载识别模型...")
                     if not checker.download_model("rec_model"):
                         download_success = False
 
-                if download_success and not os.path.exists(os.path.join(paddleocr_dir, "ch_PP-OCRv3_cls_infer.pdmodel")):
+                if download_success and not os.path.exists(os.path.join(paddleocr_dir, "ch_ppocr_mobile_v2.0_cls_infer", "inference.pdmodel")):
                     self.log("下载方向分类模型...")
                     if not checker.download_model("cls_model"):
                         download_success = False

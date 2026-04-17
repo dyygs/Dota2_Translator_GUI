@@ -66,7 +66,8 @@ class EnvironmentChecker:
 
     MODEL_FILES = {
         "det_model": {
-            "files": ["en_PP-OCRv3_det_infer.pdmodel", "en_PP-OCRv3_det_infer.pdiparams"],
+            "files": [os.path.join("en_PP-OCRv3_det_infer", "inference.pdmodel"),
+                     os.path.join("en_PP-OCRv3_det_infer", "inference.pdiparams")],
             "urls": [
                 "https://paddleocr.bj.bcebos.com/PP-OCRv3/english/en_PP-OCRv3_det_infer.tar",
                 "https://gitee.com/paddlepaddle/PaddleOCR/releases/download/v3.0.0-beta0/en_PP-OCRv3_det_infer.tar",
@@ -75,7 +76,8 @@ class EnvironmentChecker:
             "description": "OCR检测模型"
         },
         "rec_model": {
-            "files": ["en_PP-OCRv3_rec_infer.pdmodel", "en_PP-OCRv3_rec_infer.pdiparams"],
+            "files": [os.path.join("en_PP-OCRv3_rec_infer", "inference.pdmodel"),
+                     os.path.join("en_PP-OCRv3_rec_infer", "inference.pdiparams")],
             "urls": [
                 "https://paddleocr.bj.bcebos.com/PP-OCRv3/english/en_PP-OCRv3_rec_infer.tar",
                 "https://gitee.com/paddlepaddle/PaddleOCR/releases/download/v3.0.0-beta0/en_PP-OCRv3_rec_infer.tar",
@@ -84,7 +86,8 @@ class EnvironmentChecker:
             "description": "OCR识别模型"
         },
         "cls_model": {
-            "files": ["ch_PP-OCRv3_cls_infer.pdmodel", "ch_PP-OCRv3_cls_infer.pdiparams"],
+            "files": [os.path.join("ch_ppocr_mobile_v2.0_cls_infer", "inference.pdmodel"),
+                     os.path.join("ch_ppocr_mobile_v2.0_cls_infer", "inference.pdiparams")],
             "urls": [
                 "https://paddleocr.bj.bcebos.com/dygraph_v2.0/ch/ch_ppocr_mobile_v2.0_cls_infer.tar",
                 "https://gitee.com/paddlepaddle/PaddleOCR/releases/download/v3.0.0-beta0/ch_ppocr_mobile_v2.0_cls_infer.tar",
