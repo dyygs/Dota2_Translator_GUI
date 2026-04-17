@@ -638,6 +638,8 @@ def run_main_program():
 
 def main():
     """主函数"""
+    global _main_process  # 声明使用全局变量
+    
     # 写入启动日志
     log_to_file("=" * 50)
     log_to_file("启动器开始运行")
@@ -751,9 +753,20 @@ def main():
     
     # 等待主程序结束
     if _main_process is not None:
-        log_to_file("等待主程序结束...")
-        _main_process.wait()
-        log_to_file("主程序已结束，启动器退出")
+        try:
+            log_to_file("等待主程序结束...")
+            _main_process.wait(timeout=300)  # 最多等待5分钟
+            log_to_file(f"主程序已结束，返回码: {_main_process.returncode}")
+        except subprocess.TimeoutExpired:
+            log_to_file("等待超时，强制退出")
+        except Exception as e:
+            log_to_file(f"等待主程序时出错: {e}")
+    else:
+        log_to_file("未启动主程序，启动器退出")
+    
+    log_to_file("=" * 50)
+    log_to_file("启动器退出")
+    log_to_file("=" * 50)
 
 if __name__ == "__main__":
     main()
