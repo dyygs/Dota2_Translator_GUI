@@ -513,80 +513,64 @@ def check_and_setup_environment(log_func=None):
     log(f"Python路径: {python_path}")
     
     env = os.environ.copy()
-    # 使用系统临时目录避免长路径问题
-    import tempfile
-    import shutil
-    temp_dir = tempfile.mkdtemp(prefix="dota2_")
-    env["TEMP"] = temp_dir
-    env["TMP"] = temp_dir
-    log(f"临时目录: {temp_dir}")
+    
+    # 逐项检查并安装依赖
+    total_deps = len(deps)
+    installed_count = 0
+    skipped_count = 0
 
-    try:
-        # 逐项检查并安装依赖
-        total_deps = len(deps)
-        installed_count = 0
-        skipped_count = 0
+    for idx, (module_name, pkg_name) in enumerate(deps):
+        progress = f"[{idx+1}/{total_deps}]"
+        log(f"检查依赖 {progress} {pkg_name}...")
 
-        for idx, (module_name, pkg_name) in enumerate(deps):
-            progress = f"[{idx+1}/{total_deps}]"
-            log(f"检查依赖 {progress} {pkg_name}...")
+        # 检查是否已安装
+        if check_dependency_installed(runtime_dir, module_name):
+            log(f"  {pkg_name} 已安装，跳过")
+            skipped_count += 1
+            continue
 
-            # 检查是否已安装
-            if check_dependency_installed(runtime_dir, module_name):
-                log(f"  {pkg_name} 已安装，跳过")
-                skipped_count += 1
-                continue
+        log(f"  {pkg_name} 未安装，正在安装 {progress}...")
 
-            log(f"  {pkg_name} 未安装，正在安装 {progress}...")
+        # 选择合适的镜像
+        if pkg_name == "paddlepaddle":
+            mirror_list = MIRRORS["paddlepaddle"]
+        else:
+            mirror_list = MIRRORS["pip"]
 
-            # 选择合适的镜像
-            if pkg_name == "paddlepaddle":
-                mirror_list = MIRRORS["paddlepaddle"]
+        # 尝试多个镜像安装
+        installed = False
+        last_error = ""
+        for mirror in mirror_list:
+            success, error = install_dependency(runtime_dir, module_name, pkg_name, mirror, log, env)
+            if success:
+                log(f"  {pkg_name} 安装成功 {progress}")
+                installed = True
+                installed_count += 1
+                break
             else:
-                mirror_list = MIRRORS["pip"]
+                last_error = error
+                log(f"  {mirror[:25]}... 失败: {error[:80]}")
 
-            # 尝试多个镜像安装
-            installed = False
-            last_error = ""
-            for mirror in mirror_list:
-                success, error = install_dependency(runtime_dir, module_name, pkg_name, mirror, log, env)
-                if success:
-                    log(f"  {pkg_name} 安装成功 {progress}")
-                    installed = True
-                    installed_count += 1
-                    break
-                else:
-                    last_error = error
-                    log(f"  {mirror[:25]}... 失败: {error[:80]}")
+        if not installed:
+            log(f"  {pkg_name} 安装失败: {last_error[:150]}")
+            log("=" * 50)
+            log(f"环境初始化失败: {pkg_name} 安装失败")
+            log("=" * 50)
+            return False
 
-            if not installed:
-                log(f"  {pkg_name} 安装失败: {last_error[:150]}")
-                log("=" * 50)
-                log(f"环境初始化失败: {pkg_name} 安装失败")
-                log("=" * 50)
-                return False
+    # 总结
+    log("=" * 50)
+    log(f"依赖检查完成: {skipped_count}个已存在, {installed_count}个新安装, {total_deps}个总计")
+    log("=" * 50)
 
-        # 总结
-        log("=" * 50)
-        log(f"依赖检查完成: {skipped_count}个已存在, {installed_count}个新安装, {total_deps}个总计")
-        log("=" * 50)
+    log("环境初始化完成!")
+    log_to_file("环境初始化完成!")
 
-        log("环境初始化完成!")
-        log_to_file("环境初始化完成!")
+    # 保存检查结果
+    python_path = find_system_python()
+    save_check_result(True, python_path or "")
 
-        # 保存检查结果
-        python_path = find_system_python()
-        save_check_result(True, python_path or "")
-
-        return True
-    finally:
-        # 清理临时目录
-        if 'temp_dir' in locals() and os.path.exists(temp_dir):
-            try:
-                shutil.rmtree(temp_dir, ignore_errors=True)
-                log(f"临时目录已清理: {temp_dir}")
-            except Exception as e:
-                log(f"清理临时目录失败: {e}")
+    return True
 
 def run_main_program():
     """运行主程序"""
@@ -674,12 +658,11 @@ def main():
                                     log_to_file(f"错误输出: {error_content[:1000]}")
                     else:
                         log_to_file(f"主程序已启动（使用缓存，进程ID: {_main_process.pid}）")
-                    
-                    # 等待主程序结束，避免临时文件清理失败
-                    if _main_process is not None and _main_process.poll() is None:
-                        log_to_file("等待主程序结束...")
-                        _main_process.wait()
-                        log_to_file("主程序已结束")
+                        # 等待主程序结束
+                        if _main_process is not None:
+                            log_to_file("等待主程序结束...")
+                            _main_process.wait()
+                            log_to_file("主程序已结束")
                     return
                 except Exception as e:
                     log_to_file(f"启动失败，重新检查: {e}")
@@ -748,21 +731,17 @@ def main():
     
     root.mainloop()
     
+    # 销毁 Tk 窗口（用户不会再看到"无响应"的窗口）
+    root.destroy()
+    
     # mainloop 结束后，在主线程中运行主程序
     run_main_program()
     
     # 等待主程序结束
     if _main_process is not None:
-        try:
-            log_to_file("等待主程序结束...")
-            _main_process.wait(timeout=300)  # 最多等待5分钟
-            log_to_file(f"主程序已结束，返回码: {_main_process.returncode}")
-        except subprocess.TimeoutExpired:
-            log_to_file("等待超时，强制退出")
-        except Exception as e:
-            log_to_file(f"等待主程序时出错: {e}")
-    else:
-        log_to_file("未启动主程序，启动器退出")
+        log_to_file("等待主程序结束...")
+        _main_process.wait()
+        log_to_file("主程序已结束")
     
     log_to_file("=" * 50)
     log_to_file("启动器退出")

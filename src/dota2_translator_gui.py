@@ -798,7 +798,7 @@ class RealtimeTranslator:
                 self.last_img_hash = img_hash
                 
                 try:
-                    result = self.ocr.ocr(img_np, cls=True)
+                    result = self.ocr.ocr(img_np)
                     
                     texts = []
                     if result and result[0]:
@@ -944,14 +944,33 @@ class Dota2TranslatorGUI:
         main_frame = ttk.Frame(self.root, padding="10")
         main_frame.pack(fill=tk.BOTH, expand=True)
 
+        # 先创建底部栏，确保始终可见
+        footer_frame = ttk.Frame(main_frame)
+        footer_frame.pack(side=tk.BOTTOM, fill=tk.X, pady=(5, 0))
+        
+        ttk.Label(footer_frame, text="GitHub: ", foreground='gray', font=('Microsoft YaHei UI', 8)).pack(side=tk.LEFT, padx=5)
+        github_link = ttk.Label(footer_frame, text="https://github.com/dyygs/Dota2_Translator_GUI", foreground='#3498db', cursor='hand2', font=('Microsoft YaHei UI', 8, 'underline'))
+        github_link.pack(side=tk.LEFT)
+        github_link.bind('<Button-1>', lambda e: webbrowser.open('https://github.com/dyygs/Dota2_Translator_GUI'))
+        
+        ttk.Label(footer_frame, text=" | ", foreground='gray').pack(side=tk.LEFT)
+        
+        coffee_link = ttk.Label(footer_frame, text="觉得好用？请开发者喝杯咖啡", foreground='#e67e22', cursor='hand2', font=('Microsoft YaHei UI', 8))
+        coffee_link.pack(side=tk.LEFT)
+        coffee_link.bind('<Button-1>', lambda e: self._show_donate_qrcode())
+
+        # 内容区域
+        content_frame = ttk.Frame(main_frame)
+        content_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
         title_label = ttk.Label(
-            main_frame,
+            content_frame,
             text="🎮 DOTA2翻译小助手",
             font=('Microsoft YaHei UI', 16, 'bold')
         )
         title_label.pack(pady=(0,10))
 
-        status_frame = ttk.LabelFrame(main_frame, text="状态", padding="5")
+        status_frame = ttk.LabelFrame(content_frame, text="状态", padding="5")
         status_frame.pack(fill=tk.X, pady=(0,5))
         
         status_row = ttk.Frame(status_frame)
@@ -976,7 +995,7 @@ class Dota2TranslatorGUI:
         self.email_status_display_var = tk.StringVar(value="未设置")
         ttk.Label(status_row, textvariable=self.email_status_display_var, foreground='#95a5a6', font=('Microsoft YaHei UI', 9, 'bold')).pack(side=tk.LEFT, padx=5)
 
-        input_translate_frame = ttk.LabelFrame(main_frame, text="输入翻译", padding="10")
+        input_translate_frame = ttk.LabelFrame(content_frame, text="输入翻译", padding="10")
         input_translate_frame.pack(fill=tk.X, pady=5)
         
         it_row1 = ttk.Frame(input_translate_frame)
@@ -988,7 +1007,7 @@ class Dota2TranslatorGUI:
         self.trigger_key_var = tk.StringVar(value="F6")
         ttk.Button(it_row1, textvariable=self.trigger_key_var, command=self.start_set_key, width=6).pack(side=tk.LEFT, padx=5)
 
-        realtime_frame = ttk.LabelFrame(main_frame, text="实时翻译", padding="10")
+        realtime_frame = ttk.LabelFrame(content_frame, text="实时翻译", padding="10")
         realtime_frame.pack(fill=tk.X, pady=5)
         
         rt_row1 = ttk.Frame(realtime_frame)
@@ -1018,18 +1037,7 @@ class Dota2TranslatorGUI:
         self.show_border_var = tk.BooleanVar(value=self.config.get('show_region_border', False))
         ttk.Checkbutton(rt_row3, text="显示识别区域绿色虚线框", variable=self.show_border_var, command=self._toggle_show_border).pack(side=tk.LEFT, padx=5)
 
-        # 测试栏已隐藏
-        # test_frame = ttk.LabelFrame(main_frame, text="测试", padding="10")
-        # test_frame.pack(fill=tk.X, pady=5)
-        
-        # test_row = ttk.Frame(test_frame)
-        # test_row.pack(fill=tk.X)
-        # self.test_input = ttk.Entry(test_row, width=30)
-        # self.test_input.pack(side=tk.LEFT, padx=5)
-        # self.test_input.insert(0, "帮我买个眼")
-        # ttk.Button(test_row, text="翻译", command=self.test_translation, width=8).pack(side=tk.LEFT, padx=5)
-
-        log_frame = ttk.LabelFrame(main_frame, text="日志", padding="10")
+        log_frame = ttk.LabelFrame(content_frame, text="日志", padding="10")
         log_frame.pack(fill=tk.BOTH, expand=True, pady=5)
 
         self.log_text = scrolledtext.ScrolledText(
@@ -1039,22 +1047,8 @@ class Dota2TranslatorGUI:
             font=('Consolas', 9)
         )
         self.log_text.pack(fill=tk.BOTH, expand=True)
-
-        footer_frame = ttk.Frame(main_frame)
-        footer_frame.pack(fill=tk.X, pady=(5, 0))
         
         self.log("UI初始化完成")
-        
-        ttk.Label(footer_frame, text="GitHub: ", foreground='gray', font=('Microsoft YaHei UI', 8)).pack(side=tk.LEFT, padx=5)
-        github_link = ttk.Label(footer_frame, text="https://github.com/dyygs/Dota2_Translator_GUI", foreground='#3498db', cursor='hand2', font=('Microsoft YaHei UI', 8, 'underline'))
-        github_link.pack(side=tk.LEFT)
-        github_link.bind('<Button-1>', lambda e: webbrowser.open('https://github.com/dyygs/Dota2_Translator_GUI'))
-        
-        ttk.Label(footer_frame, text=" | ", foreground='gray').pack(side=tk.LEFT)
-        
-        coffee_link = ttk.Label(footer_frame, text="觉得好用？请开发者喝杯咖啡", foreground='#e67e22', cursor='hand2', font=('Microsoft YaHei UI', 8))
-        coffee_link.pack(side=tk.LEFT)
-        coffee_link.bind('<Button-1>', lambda e: self._show_donate_qrcode())
 
         
         saved_region = self.config.get('capture_region', {})
@@ -1353,7 +1347,12 @@ class Dota2TranslatorGUI:
             img = img.resize((new_w, new_h))
             photo = ImageTk.PhotoImage(img)
             
-            qrcode_window.geometry(f"{new_w + 20}x{new_h + 40}")
+            window_w, window_h = new_w + 20, new_h + 40
+            screen_w = qrcode_window.winfo_screenwidth()
+            screen_h = qrcode_window.winfo_screenheight()
+            x = (screen_w - window_w) // 2
+            y = (screen_h - window_h) // 2
+            qrcode_window.geometry(f"{window_w}x{window_h}+{x}+{y}")
             
             label = tk.Label(qrcode_window, image=photo)
             label.image = photo
