@@ -698,9 +698,6 @@ def main():
     
     root.mainloop()
     
-    # 销毁 Tk 窗口（用户不会再看到"无响应"的窗口）
-    root.destroy()
-    
     # mainloop 结束后，在主线程中运行主程序
     run_main_program()
     
