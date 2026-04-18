@@ -16,7 +16,7 @@ from tkinter import ttk, scrolledtext
 import threading
 import time
 
-VERSION = "2.2.0"
+VERSION = "2.2.1"
 
 _main_process = None
 

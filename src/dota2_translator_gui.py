@@ -5,7 +5,12 @@ Dota 2 中文→英文翻译器 - GUI版本
 版本：1.2.0
 """
 
-VERSION = "2.2.0"
+import io
+import base64
+import os
+from qrcode_data import QRCODE_BASE64
+
+VERSION = "2.2.1"
 
 import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox
@@ -55,6 +60,44 @@ def get_resource_path(relative_path):
     else:
         base_path = os.path.dirname(os.path.abspath(__file__))
     return os.path.join(base_path, relative_path)
+
+def get_qrcode_path():
+    if getattr(sys, 'frozen', False):
+        paths_to_try = [
+            os.path.join(sys._MEIPASS, 'src', '1.png'),
+            os.path.join(sys._MEIPASS, '1.png'),
+            os.path.join(os.path.dirname(sys.executable), 'src', '1.png'),
+            os.path.join(os.path.dirname(sys.executable), '1.png'),
+        ]
+        for p in paths_to_try:
+            if os.path.exists(p):
+                return p
+        
+        log_file = os.path.join(os.path.dirname(sys.executable), 'qrcode_debug.log')
+        try:
+            with open(log_file, 'w', encoding='utf-8') as f:
+                f.write(f"_MEIPASS: {sys._MEIPASS}\n")
+                f.write(f"sys.executable: {sys.executable}\n")
+                f.write(f"Tried paths:\n")
+                for p in paths_to_try:
+                    f.write(f"  {p} - exists: {os.path.exists(p)}\n")
+                if hasattr(sys, '_MEIPASS'):
+                    f.write(f"\n_MEIPASS contents:\n")
+                    try:
+                        for item in os.listdir(sys._MEIPASS):
+                            f.write(f"  {item}\n")
+                            if item == 'src':
+                                src_path = os.path.join(sys._MEIPASS, 'src')
+                                for subitem in os.listdir(src_path):
+                                    f.write(f"    {subitem}\n")
+                    except Exception as e:
+                        f.write(f"  Error listing: {e}\n")
+        except:
+            pass
+        
+        return paths_to_try[0]
+    else:
+        return os.path.join(os.path.dirname(os.path.abspath(__file__)), '1.png')
 
 class Config:
     DEFAULT_CONFIG = {
@@ -827,7 +870,7 @@ class Dota2TranslatorGUI:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title(f"DOTA2翻译小助手 v{VERSION}")
-        self.root.geometry("600x550")
+        self.root.geometry("600x650")
         self.root.resizable(True, True)
 
         self.config = Config()
@@ -1000,6 +1043,8 @@ class Dota2TranslatorGUI:
         footer_frame = ttk.Frame(main_frame)
         footer_frame.pack(fill=tk.X, pady=(5, 0))
         
+        self.log("UI初始化完成")
+        
         ttk.Label(footer_frame, text="GitHub: ", foreground='gray', font=('Microsoft YaHei UI', 8)).pack(side=tk.LEFT, padx=5)
         github_link = ttk.Label(footer_frame, text="https://github.com/dyygs/Dota2_Translator_GUI", foreground='#3498db', cursor='hand2', font=('Microsoft YaHei UI', 8, 'underline'))
         github_link.pack(side=tk.LEFT)
@@ -1120,7 +1165,7 @@ class Dota2TranslatorGUI:
             text = pyperclip.paste()
 
             if text and re.search(r'[a-zA-Z]', text):
-                translated = self.en_to_zh_engine.translate(text)
+                translated = self.realtime_engine.translate(text)
 
                 if translated and translated != text:
                     pyperclip.copy(translated)
@@ -1295,13 +1340,12 @@ class Dota2TranslatorGUI:
 
     def _show_donate_qrcode(self):
         """显示捐赠二维码"""
-        qrcode_path = get_resource_path('1.png')
-        
-        if os.path.exists(qrcode_path):
+        try:
+            img_data = io.BytesIO(base64.b64decode(QRCODE_BASE64))
             qrcode_window = tk.Toplevel(self.root)
             qrcode_window.title("请开发者喝杯咖啡")
             
-            img = Image.open(qrcode_path)
+            img = Image.open(img_data)
             w, h = img.size
             max_w, max_h = 280, 350
             ratio = min(max_w / w, max_h / h)
@@ -1316,8 +1360,8 @@ class Dota2TranslatorGUI:
             label.pack(padx=10, pady=10)
             
             ttk.Label(qrcode_window, text="感谢您的支持！", font=('Microsoft YaHei UI', 10)).pack(pady=5)
-        else:
-            messagebox.showinfo("提示", "二维码图片不存在")
+        except Exception as e:
+            messagebox.showinfo("提示", f"二维码加载失败: {e}")
 
     def _start_keyboard_listener(self):
         keyboard.hook(self.on_key_pressed)
@@ -1351,6 +1395,7 @@ class Dota2TranslatorGUI:
             self.realtime_translator.stop()
         self.root.quit()
         self.root.destroy()
+        os._exit(0)
 
     def run(self):
         self.root.mainloop()

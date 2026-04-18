@@ -40,6 +40,7 @@ config.json
 *.spec
 models/
 check_result.txt   # 环境检查缓存
+src/1.png         # 二维码已base64编码到qrcode_data.py
 
 # Old/backup files (ignore - not tracked in git)
 src/词汇表.py
@@ -49,6 +50,10 @@ src/dota2_translation_system_old.py
 test_100_diverse.py
 FULL_TEST_REPORT_100_V4_OPTIMIZED.md
 runtime_hook.py
+
+# Project specific files (ignore)
+UI_LAYOUT.md
+AI_INSTRUCTIONS.md
 
 # Other test files (ignore)
 test_*.py
