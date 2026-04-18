@@ -1164,8 +1164,8 @@ class Dota2TranslatorGUI:
 
             text = pyperclip.paste()
 
-            if text and re.search(r'[a-zA-Z]', text):
-                translated = self.realtime_engine.translate(text)
+            if text and re.search(r'[\u4e00-\u9fff]', text):
+                translated = self.engine.translate(text)
 
                 if translated and translated != text:
                     pyperclip.copy(translated)
