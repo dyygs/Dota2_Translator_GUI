@@ -1517,24 +1517,27 @@ def check_environment_background(app):
             return False
 
     def install_deps():
-        """安装依赖"""
+        """安装依赖（固定版本）"""
         deps = [
-            ("numpy", "numpy<2.0.0"),
-            ("opencv-python", "opencv-python<=4.6.0.66"),
-            ("pillow", "pillow>=9.0.0"),
+            ("numpy", "numpy==2.4.4"),
+            ("opencv-python", "opencv-python==4.6.0.66"),
+            ("pillow", "pillow==10.4.0"),
             ("paddlepaddle", "paddlepaddle==2.6.2"),
-            ("paddleocr", "paddleocr>=2.7.0,<3.0.0"),
+            ("paddleocr", "paddleocr==2.10.0"),
             ("keyboard", "keyboard==0.13.5"),
             ("pyperclip", "pyperclip==1.8.2"),
             ("pyautogui", "pyautogui==0.9.54"),
-            ("requests", "requests>=2.32.0"),
-            ("mss", "mss>=9.0.0"),
+            ("requests", "requests==2.33.1"),
+            ("mss", "mss==10.1.0"),
+            ("pygetwindow", "pygetwindow==0.0.9"),
+            ("pytweening", "pytweening==1.2.0"),
         ]
         
         pip_exe = os.path.join(runtime_dir, "Scripts", "pip.exe")
         
         for i, (name, pkg) in enumerate(deps):
-            log(f"安装 {name}...")
+            version = pkg.split("==")[1] if "==" in pkg else pkg
+            log(f"安装 {name}=={version}...")
             try:
                 result = subprocess.run(
                     [pip_exe, "install", pkg, "-i", "https://pypi.tuna.tsinghua.edu.cn/simple", "--no-cache-dir"],

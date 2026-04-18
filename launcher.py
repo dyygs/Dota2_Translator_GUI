@@ -494,18 +494,20 @@ def check_and_setup_environment(log_func=None):
     else:
         log("pip已安装")
     
-    # 3. 检查/安装依赖
+    # 3. 检查/安装依赖（固定版本）
     deps = [
-        ("numpy", "numpy<2.0.0"),
-        ("cv2", "opencv-python<=4.6.0.66"),
-        ("PIL", "pillow>=9.0.0"),
+        ("numpy", "numpy==2.4.4"),
+        ("cv2", "opencv-python==4.6.0.66"),
+        ("PIL", "pillow==10.4.0"),
         ("paddle", "paddlepaddle==2.6.2"),
-        ("paddleocr", "paddleocr>=2.7.0,<3.0.0"),
+        ("paddleocr", "paddleocr==2.10.0"),
         ("keyboard", "keyboard==0.13.5"),
         ("pyperclip", "pyperclip==1.8.2"),
         ("pyautogui", "pyautogui==0.9.54"),
-        ("requests", "requests>=2.32.0"),
-        ("mss", "mss>=9.0.0"),
+        ("requests", "requests==2.33.1"),
+        ("mss", "mss==10.1.0"),
+        ("pygetwindow", "pygetwindow==0.0.9"),
+        ("pytweening", "pytweening==1.2.0"),
     ]
     
     # 设置环境变量
@@ -629,43 +631,8 @@ def main():
     log_to_file("启动器开始运行")
     log_to_file("=" * 50)
     
-    # 检查缓存，如果上次成功就直接启动
-    cached_result = load_check_result()
-    if cached_result and cached_result.get('success') == 'True':
-        python_path = cached_result.get('python', '')
-        if python_path and os.path.exists(python_path):
-            log_to_file(f"使用缓存的Python: {python_path}")
-            src_dir = get_src_dir()
-            main_script = os.path.join(src_dir, "src", "dota2_translator_gui.py")
-            if os.path.exists(main_script):
-                error_log = os.path.join(get_app_dir(), "main_error.log")
-                try:
-                    with open(error_log, 'w', encoding='utf-8') as err_file:
-                        _main_process = subprocess.Popen(
-                            [python_path, main_script],
-                            stderr=err_file,
-                            stdout=err_file,
-                            creationflags=subprocess.CREATE_NO_WINDOW
-                        )
-                    time.sleep(2)
-                    poll_result = _main_process.poll()
-                    if poll_result is not None:
-                        log_to_file(f"主程序已退出，返回码: {poll_result}")
-                        if os.path.exists(error_log):
-                            with open(error_log, 'r', encoding='utf-8') as f:
-                                error_content = f.read()
-                                if error_content:
-                                    log_to_file(f"错误输出: {error_content[:1000]}")
-                    else:
-                        log_to_file(f"主程序已启动（使用缓存，进程ID: {_main_process.pid}）")
-                        # 等待主程序结束
-                        if _main_process is not None:
-                            log_to_file("等待主程序结束...")
-                            _main_process.wait()
-                            log_to_file("主程序已结束")
-                    return
-                except Exception as e:
-                    log_to_file(f"启动失败，重新检查: {e}")
+    # 每次启动都强制检查环境，不使用缓存
+    log_to_file("开始环境检查...")
     
     # 创建启动窗口
     root = tk.Tk()

@@ -45,16 +45,18 @@ class EnvironmentChecker:
     ]
 
     PIP_PACKAGES = {
-        "paddleocr": "paddleocr>=2.7.0,<3.0.0",
+        "paddleocr": "paddleocr==2.10.0",
         "paddlepaddle": "paddlepaddle==2.6.2",
-        "opencv-python": "opencv-python<=4.6.0.66",
-        "numpy": "numpy<2.0.0",
-        "pillow": "pillow>=9.0.0",
+        "opencv-python": "opencv-python==4.6.0.66",
+        "numpy": "numpy==2.4.4",
+        "pillow": "pillow==10.4.0",
         "keyboard": "keyboard==0.13.5",
         "pyperclip": "pyperclip==1.8.2",
         "pyautogui": "pyautogui==0.9.54",
-        "requests": "requests>=2.32.0",
-        "mss": "mss>=9.0.0",
+        "requests": "requests==2.33.1",
+        "mss": "mss==10.1.0",
+        "pygetwindow": "pygetwindow==0.0.9",
+        "pytweening": "pytweening==1.2.0",
     }
 
     PIP_MIRRORS = [
