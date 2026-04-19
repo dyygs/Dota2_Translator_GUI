@@ -47,6 +47,9 @@ class ScreenshotTool:
         """
         try:
             with mss.mss() as sct:
+                if len(sct.monitors) < 2:
+                    print("未检测到显示器")
+                    return None
                 screenshot = sct.grab(sct.monitors[1])
                 
                 from PIL import Image

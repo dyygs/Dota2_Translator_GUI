@@ -12,8 +12,10 @@ class RegionSelector:
         self.start_x = None
         self.start_y = None
         self.rect_id = None
+        self._callback_called = False
 
     def start_selection(self):
+        self._callback_called = False
         self.selection_window = tk.Toplevel()
         self.selection_window.attributes('-fullscreen', True)
         self.selection_window.attributes('-alpha', 0.3)
@@ -50,7 +52,7 @@ class RegionSelector:
             )
 
     def on_mouse_up(self, event):
-        if self.start_x is not None:
+        if self.start_x is not None and not self._callback_called:
             x1, y1 = self.start_x, self.start_y
             x2, y2 = event.x, event.y
 
@@ -59,14 +61,23 @@ class RegionSelector:
             width = abs(x2 - x1)
             height = abs(y2 - y1)
 
+            self._callback_called = True
             if width > 20 and height > 10:
                 self.callback({"x": int(x), "y": int(y), "width": int(width), "height": int(height)})
             else:
                 self.callback(None)
 
-            self.selection_window.destroy()
+            try:
+                self.selection_window.destroy()
+            except:
+                pass
 
     def cancel_selection(self):
+        if not self._callback_called:
+            self._callback_called = True
+            self.callback(None)
         if self.selection_window:
-            self.selection_window.destroy()
-        self.callback(None)
+            try:
+                self.selection_window.destroy()
+            except:
+                pass

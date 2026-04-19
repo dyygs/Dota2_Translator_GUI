@@ -6,6 +6,7 @@
 import os
 import sys
 import json
+import copy
 
 class Config:
     """配置管理器 - 完整版"""
@@ -38,7 +39,7 @@ class Config:
         if config_file is None:
             config_file = self._get_default_config_file()
         self.config_file = config_file
-        self.config = self.DEFAULT_CONFIG.copy()
+        self.config = copy.deepcopy(self.DEFAULT_CONFIG)
         self.load_config()
     
     def _get_default_config_file(self):
@@ -105,7 +106,7 @@ class Config:
     
     def reset(self):
         """重置为默认配置"""
-        self.config = self.DEFAULT_CONFIG.copy()
+        self.config = copy.deepcopy(self.DEFAULT_CONFIG)
         self.save_config()
     
     @property

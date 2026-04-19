@@ -42,6 +42,7 @@ from src.gui.region_selector import RegionSelector
 
 # 外部服务
 from src.services.qrcode_data import QRCODE_BASE64
+from src.services.update_checker import check_update_multi_source, download_update, perform_update
 
 
 def get_resource_path(relative_path):
@@ -593,16 +594,273 @@ class Dota2TranslatorGUI:
         self.root.destroy()
         os._exit(0)
 
+    def check_for_update(self):
+        """后台检查更新"""
+        def do_check():
+            print(f"[更新检查] 开始检查更新，当前版本: {VERSION}")
+            config = {
+                'github_owner': 'dyygs',
+                'github_repo': 'Dota2_Translator_GUI',
+            }
+            result = check_update_multi_source(config, VERSION)
+            
+            print(f"[更新检查] 结果: has_update={result.get('has_update')}, "
+                  f"latest_version={result.get('latest_version')}, "
+                  f"download_url={result.get('download_url')}, "
+                  f"error={result.get('error')}")
+            
+            if result.get('has_update') and result.get('download_url'):
+                print("[更新检查] 发现更新，准备显示对话框")
+                self.root.after(0, lambda: self.show_update_dialog(result))
+            else:
+                print("[更新检查] 无更新或检查失败")
+        
+        threading.Thread(target=do_check, daemon=True).start()
+
+    def show_update_dialog(self, update_info):
+        """显示更新提示对话框"""
+        print(f"[更新检查] show_update_dialog 被调用，update_info: {update_info}")
+        
+        latest_version = update_info.get('latest_version', 'unknown')
+        release_notes = update_info.get('release_notes', '暂无更新说明')
+        download_url = update_info.get('download_url', '')
+        force_update = update_info.get('force_update', False)
+        sha256 = update_info.get('sha256', '')
+        
+        print(f"[更新检查] latest_version={latest_version}, download_url={download_url}, force_update={force_update}")
+        
+        dialog = tk.Toplevel(self.root)
+        dialog.title("发现新版本" if not force_update else "必须更新")
+        dialog.geometry("450x350")
+        dialog.resizable(False, False)
+        dialog.transient(self.root)
+        dialog.grab_set()
+        dialog.attributes('-topmost', True)
+        dialog.focus_force()
+        
+        if force_update:
+            dialog.protocol("WM_DELETE_WINDOW", lambda: None)
+        
+        frame = ttk.Frame(dialog, padding="20")
+        frame.pack(fill=tk.BOTH, expand=True)
+        
+        title_text = f"发现新版本 {latest_version}" if not force_update else f"必须更新到 {latest_version}"
+        ttk.Label(frame, text=title_text, font=('Microsoft YaHei', 14, 'bold')).pack(pady=(0, 10))
+        ttk.Label(frame, text=f"当前版本: {VERSION}", font=('Microsoft YaHei', 10)).pack()
+        
+        if force_update:
+            ttk.Label(frame, text="此版本包含重要更新，必须更新后才能继续使用", 
+                     font=('Microsoft YaHei', 9), foreground='red').pack(pady=(5, 0))
+        
+        notes_frame = ttk.LabelFrame(frame, text="更新内容", padding="10")
+        notes_frame.pack(fill=tk.BOTH, expand=True, pady=10)
+        
+        notes_text = scrolledtext.ScrolledText(notes_frame, height=5, width=45, font=('Microsoft YaHei', 9))
+        notes_text.pack(fill=tk.BOTH, expand=True)
+        notes_text.insert(tk.END, release_notes[:500] if release_notes else "暂无更新说明")
+        notes_text.config(state=tk.DISABLED)
+        
+        btn_frame = ttk.Frame(frame)
+        btn_frame.pack(pady=15)
+        
+        def on_update():
+            print(f"[更新检查] 点击了立即更新按钮")
+            dialog.destroy()
+            self.start_download(download_url, latest_version, sha256, force_update)
+        
+        def on_ignore():
+            print(f"[更新检查] 点击了忽略按钮")
+            dialog.destroy()
+        
+        update_btn = ttk.Button(btn_frame, text="立即更新", command=on_update, width=15)
+        update_btn.pack(side=tk.LEFT, padx=15)
+        
+        if not force_update:
+            ignore_btn = ttk.Button(btn_frame, text="忽略", command=on_ignore, width=15)
+            ignore_btn.pack(side=tk.LEFT, padx=15)
+        
+        dialog.update_idletasks()
+        
+        screen_width = dialog.winfo_screenwidth()
+        screen_height = dialog.winfo_screenheight()
+        x = (screen_width - 450) // 2
+        y = (screen_height - 350) // 2
+        dialog.geometry(f"450x350+{x}+{y}")
+        
+        dialog.deiconify()
+        dialog.lift()
+        dialog.update()
+        
+        print(f"[更新检查] 对话框已创建，按钮已添加，force_update={force_update}")
+
+    def start_download(self, download_url, version, sha256='', force_update=False):
+        """开始下载更新"""
+        if getattr(sys, 'frozen', False):
+            download_dir = os.path.dirname(sys.executable)
+        else:
+            download_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        
+        if not os.path.exists(download_dir):
+            try:
+                os.makedirs(download_dir)
+            except Exception:
+                download_dir = os.path.expanduser("~\\Downloads")
+        
+        new_exe_name = f"Dota2Translator_v{version}.exe"
+        new_exe_path = os.path.join(download_dir, new_exe_name)
+        
+        progress_dialog = tk.Toplevel(self.root)
+        progress_dialog.title("下载更新")
+        progress_dialog.geometry("400x200")
+        progress_dialog.resizable(False, False)
+        progress_dialog.transient(self.root)
+        progress_dialog.grab_set()
+        progress_dialog.attributes('-topmost', True)
+        
+        progress_dialog.update_idletasks()
+        x = self.root.winfo_x() + (self.root.winfo_width() - 400) // 2
+        y = self.root.winfo_y() + (self.root.winfo_height() - 200) // 2
+        progress_dialog.geometry(f"+{x}+{y}")
+        
+        frame = ttk.Frame(progress_dialog, padding="20")
+        frame.pack(fill=tk.BOTH, expand=True)
+        
+        ttk.Label(frame, text=f"正在下载 {new_exe_name}...", font=('Microsoft YaHei', 10)).pack(pady=(0, 10))
+        
+        progress_var = tk.DoubleVar(value=0)
+        progress_bar = ttk.Progressbar(frame, variable=progress_var, maximum=100, length=350)
+        progress_bar.pack(pady=5)
+        
+        status_label = ttk.Label(frame, text="正在连接服务器...", font=('Microsoft YaHei', 9))
+        status_label.pack(pady=5)
+        
+        url_label = ttk.Label(frame, text="准备连接...", font=('Microsoft YaHei', 8), foreground='gray')
+        url_label.pack(pady=2)
+        
+        download_result = {'success': False, 'error': None, 'verified': False}
+        
+        def safe_update(text, progress=None, url=None):
+            def do_update():
+                try:
+                    status_label.config(text=text)
+                    if progress is not None:
+                        progress_var.set(progress)
+                    if url:
+                        url_label.config(text=url[:60] + "...")
+                    progress_dialog.update_idletasks()
+                    progress_dialog.update()
+                except Exception as e:
+                    with open("D:\\Dota2Translator\\download.log", "a", encoding="utf-8") as f:
+                        f.write(f"[UI更新错误] {e}\n")
+            try:
+                self.root.after(0, do_update)
+            except Exception as e:
+                with open("D:\\Dota2Translator\\download.log", "a", encoding="utf-8") as f:
+                    f.write(f"[after错误] {e}\n")
+        
+        def progress_callback(downloaded, total, current_url=None):
+            try:
+                percent = (downloaded / total) * 100 if total > 0 else 0
+                mb_downloaded = downloaded / (1024 * 1024)
+                mb_total = total / (1024 * 1024)
+                url_text = current_url[:50] + "..." if current_url else None
+                safe_update(f"{mb_downloaded:.1f} MB / {mb_total:.1f} MB ({percent:.0f}%)", percent, url_text)
+            except Exception as e:
+                with open("D:\\Dota2Translator\\download.log", "a", encoding="utf-8") as f:
+                    f.write(f"[进度回调错误] {e}\n")
+        
+        def do_download():
+            try:
+                safe_update("正在连接下载服务器...", 0)
+                with open("D:\\Dota2Translator\\download.log", "a", encoding="utf-8") as f:
+                    f.write(f"[下载] 开始下载: {download_url}\n")
+                    f.write(f"[下载] 保存到: {new_exe_path}\n")
+                
+                result = download_update(download_url, new_exe_path, progress_callback, sha256)
+                
+                download_result['success'] = result.get('success', False)
+                download_result['verified'] = result.get('verified', False)
+                download_result['error'] = result.get('error')
+                
+                with open("D:\\Dota2Translator\\download.log", "a", encoding="utf-8") as f:
+                    f.write(f"[下载] 结果: success={download_result['success']}, error={download_result['error']}\n")
+                
+            except Exception as e:
+                download_result['success'] = False
+                download_result['error'] = str(e)
+                with open("D:\\Dota2Translator\\download.log", "a", encoding="utf-8") as f:
+                    f.write(f"[下载] 异常: {e}\n")
+                print(f"[下载] 异常: {e}")
+            
+            self.root.after(0, lambda: on_download_complete(progress_dialog, download_result, new_exe_path, version, force_update))
+        
+        threading.Thread(target=do_download, daemon=True).start()
+
+    def on_download_complete(self, dialog, result, new_exe_path, version, force_update=False):
+        """下载完成处理"""
+        dialog.destroy()
+        
+        if result['success'] and result.get('verified', True):
+            if force_update:
+                confirm = True
+            else:
+                confirm = messagebox.askyesno(
+                    "下载完成",
+                    f"新版本已下载到:\n{new_exe_path}\n\n是否立即更新？\n（程序将自动关闭并更新）",
+                    parent=self.root
+                )
+            
+            if confirm:
+                current_exe = sys.executable if getattr(sys, 'frozen', False) else __file__
+                perform_update(new_exe_path, current_exe, restart=True)
+                self.root.after(500, self.quit_app)
+            else:
+                messagebox.showinfo("提示", f"新版本已保存到:\n{new_exe_path}\n\n您可以稍后手动更新。", parent=self.root)
+        else:
+            error_msg = result.get('error', '未知错误')
+            if not result.get('verified', True):
+                error_msg = "文件校验失败，可能文件已损坏"
+            
+            if force_update:
+                retry = messagebox.askyesno(
+                    "下载失败",
+                    f"{error_msg}\n\n是否重试？\n选择\"否\"将打开下载页面手动下载。",
+                    parent=self.root
+                )
+            else:
+                retry = messagebox.askyesno(
+                    "下载失败",
+                    f"下载失败: {error_msg}\n\n是否重试？\n选择\"否\"将打开下载页面。",
+                    parent=self.root
+                )
+            
+            if retry:
+                config = {
+                    'github_owner': 'dyygs',
+                    'github_repo': 'Dota2_Translator_GUI',
+                }
+                update_info = check_update_multi_source(config, VERSION)
+                if update_info.get('download_url'):
+                    self.start_download(
+                        update_info['download_url'], 
+                        update_info.get('latest_version', VERSION),
+                        update_info.get('sha256', ''),
+                        force_update
+                    )
+            else:
+                webbrowser.open("https://github.com/dyygs/Dota2_Translator_GUI/releases/latest")
+
 
 def check_environment_background(app):
-    """后台检查环境（与原版完全一致）"""
+    """后台检查环境"""
     import threading
-    import urllib.request
-    import zipfile
     import subprocess
 
-    app_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    runtime_dir = os.path.join(app_root, "runtime")
+    from src.environment.python_installer import PythonInstaller
+    from src.environment.dependency_manager import DependencyManager
+    
+    python_dir = PythonInstaller.get_python_dir()
+    app_root = PythonInstaller.get_app_dir()
     init_file = os.path.join(app_root, "init_done.txt")
 
     log_text = None
@@ -618,35 +876,33 @@ def check_environment_background(app):
                 log_text.insert(tk.END, f"[环境检查] {msg}\n")
                 log_text.see(tk.END)
                 app.root.update()
-            except:
+            except Exception:
                 pass
 
     def check_python():
-        """检查Python运行时"""
-        log("检查Python运行时...")
-        python_path = os.path.join(runtime_dir, "python.exe")
-        if not os.path.exists(python_path):
-            log("Python运行时不存在，需要下载")
-            return False
-        try:
-            result = subprocess.run([python_path, "--version"], capture_output=True, text=True, timeout=10)
-            if result.returncode == 0:
-                log(f"Python运行时正常: {result.stdout.strip()}")
-                return True
-        except Exception as e:
-            log(f"Python运行时检查失败: {e}")
-            return False
+        """检查Python"""
+        log("检查Python...")
+        python_path = PythonInstaller.find_system_python()
+        if python_path:
+            try:
+                result = subprocess.run([python_path, "--version"], capture_output=True, text=True, timeout=10)
+                if result.returncode == 0:
+                    log(f"Python正常: {result.stdout.strip()} ({python_path})")
+                    return True
+            except Exception as e:
+                log(f"Python检查失败: {e}")
+                return False
+        log("Python未安装")
         return False
 
     def check_pip():
         """检查pip"""
         log("检查pip...")
-        pip_path = os.path.join(runtime_dir, "Scripts", "pip.exe")
-        if not os.path.exists(pip_path):
-            log("pip不存在")
-            return False
-        log("pip已安装")
-        return True
+        if DependencyManager.check_pip_module():
+            log("pip已安装")
+            return True
+        log("pip未安装")
+        return False
 
     def check_deps():
         """检查依赖包"""
@@ -654,113 +910,42 @@ def check_environment_background(app):
         deps_to_check = ["paddleocr", "numpy", "PIL", "cv2"]
         missing = []
         for dep in deps_to_check:
-            try:
-                __import__(dep)
+            if DependencyManager.check_dependency_installed(dep):
                 log(f"  {dep}: OK")
-            except:
+            else:
                 log(f"  {dep}: 缺失")
                 missing.append(dep)
         return missing
-
-    def download_python():
-        """下载Python嵌入版"""
-        log("开始下载Python嵌入版...")
-        python_url = "https://www.python.org/ftp/python/3.11.9/python-3.11.9-embed-amd64.zip"
-        zip_path = os.path.join(runtime_dir, "python.zip")
-        try:
-            def reporthook(block_num, block_size, total):
-                if total > 0:
-                    percent = min(100, int((block_num * block_size * 100) / total))
-                    if block_num % 50 == 0:
-                        log(f"  下载进度: {percent}%")
-            urllib.request.urlretrieve(python_url, zip_path, reporthook)
-            log("解压Python...")
-            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-                zip_ref.extractall(runtime_dir)
-            os.remove(zip_path)
-            log("Python下载完成")
-            return True
-        except Exception as e:
-            log(f"下载Python失败: {e}")
-            return False
-
-    def install_pip():
-        """安装pip"""
-        log("开始安装pip...")
-        try:
-            pip_url = "https://bootstrap.pypa.io/get-pip.py"
-            pip_path = os.path.join(runtime_dir, "get-pip.py")
-            urllib.request.urlretrieve(pip_url, pip_path)
-            result = subprocess.run(
-                [os.path.join(runtime_dir, "python.exe"), pip_path],
-                capture_output=True, timeout=300
-            )
-            os.remove(pip_path)
-            log("pip安装完成")
-            return True
-        except Exception as e:
-            log(f"安装pip失败: {e}")
-            return False
-
-    def install_deps():
-        """安装依赖（固定版本）"""
-        deps = [
-            ("numpy", "numpy==2.4.4"),
-            ("opencv-python", "opencv-python==4.6.0.66"),
-            ("pillow", "pillow==10.4.0"),
-            ("paddlepaddle", "paddlepaddle==2.6.2"),
-            ("paddleocr", "paddleocr==2.10.0"),
-            ("keyboard", "keyboard==0.13.5"),
-            ("pyperclip", "pyperclip==1.8.2"),
-            ("pyautogui", "pyautogui==0.9.54"),
-            ("requests", "requests==2.33.1"),
-            ("mss", "mss==10.1.0"),
-            ("pygetwindow", "pygetwindow==0.0.9"),
-            ("pytweening", "pytweening==1.2.0"),
-        ]
-        pip_exe = os.path.join(runtime_dir, "Scripts", "pip.exe")
-        for i, (name, pkg) in enumerate(deps):
-            version = pkg.split("==")[1] if "==" in pkg else pkg
-            log(f"安装 {name}=={version}...")
-            try:
-                result = subprocess.run(
-                    [pip_exe, "install", pkg, "-i", "https://pypi.tuna.tsinghua.edu.cn/simple", "--no-cache-dir"],
-                    capture_output=True, timeout=600
-                )
-                if result.returncode == 0:
-                    log(f"  {name} 安装成功")
-                else:
-                    log(f"  {name} 安装失败")
-            except Exception as e:
-                log(f"  {name} 安装异常: {e}")
 
     def run_check():
         """执行检查"""
         log("=" * 30)
         log("开始环境检查...")
+        log(f"应用目录: {app_root}")
+        log(f"Python目录: {python_dir}")
         log("=" * 30)
+        
         if not check_python():
-            log("准备下载Python...")
-            if not download_python():
-                log("无法下载Python，初始化失败")
-                return
+            log("Python未安装，请运行launcher.exe安装Python")
+            return
+        
         if not check_pip():
-            log("准备安装pip...")
-            if not install_pip():
-                log("无法安装pip，初始化失败")
+            log("pip未安装，正在安装...")
+            if not DependencyManager.install_pip(log):
+                log("pip安装失败")
                 return
+        
         missing = check_deps()
         if missing:
             log(f"缺少依赖: {', '.join(missing)}")
             log("开始安装依赖...")
-            install_deps()
-            missing = check_deps()
-            if missing:
-                log(f"以下依赖仍缺失: {', '.join(missing)}")
-            else:
-                log("所有依赖安装完成!")
+            success, skipped, installed = DependencyManager.check_and_install_dependencies(log_func=log)
+            if success:
+                log(f"依赖安装完成: {skipped}个已存在, {installed}个新安装")
                 with open(init_file, 'w') as f:
                     f.write("init_done")
+            else:
+                log("依赖安装失败，请运行launcher.exe")
         else:
             log("所有依赖已安装!")
             with open(init_file, 'w') as f:
@@ -771,12 +956,53 @@ def check_environment_background(app):
 
 
 def main():
-    app = Dota2TranslatorGUI()
+    import traceback
+    
+    def log_error(msg):
+        """写入错误日志"""
+        try:
+            log_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "main_error.log")
+            with open(log_file, 'a', encoding='utf-8') as f:
+                f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {msg}\n")
+        except:
+            pass
+    
+    def handle_exception(exc_type, exc_value, exc_traceback):
+        """全局异常处理"""
+        error_msg = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+        log_error(f"未捕获的异常:\n{error_msg}")
+        print(f"[ERROR] {error_msg}")
+        
+        try:
+            messagebox.showerror(
+                "程序错误",
+                f"程序发生错误:\n{str(exc_value)}\n\n详细信息已记录到 main_error.log"
+            )
+        except:
+            pass
+    
+    sys.excepthook = handle_exception
+    
+    try:
+        app = Dota2TranslatorGUI()
 
-    # 后台环境检查（与原版一致）
-    threading.Thread(target=check_environment_background, args=(app,), daemon=True).start()
+        # 后台环境检查（与原版一致）
+        threading.Thread(target=check_environment_background, args=(app,), daemon=True).start()
+        
+        # 启动时检查更新（后台静默）
+        app.root.after(2000, app.check_for_update)
 
-    app.root.mainloop()
+        app.root.mainloop()
+    except Exception as e:
+        error_msg = traceback.format_exc()
+        log_error(f"主程序崩溃:\n{error_msg}")
+        try:
+            messagebox.showerror(
+                "程序崩溃",
+                f"程序发生严重错误:\n{str(e)}\n\n详细信息已记录到 main_error.log"
+            )
+        except:
+            pass
 
 
 if __name__ == "__main__":

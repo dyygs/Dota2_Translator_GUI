@@ -12,15 +12,8 @@ from .dependency_manager import DependencyManager
 
 def get_log_file():
     """获取日志文件路径"""
-    app_dir = _get_app_dir()
+    app_dir = PythonInstaller.get_app_dir()
     return os.path.join(app_dir, "launcher.log")
-
-def _get_app_dir():
-    """获取应用目录（exe所在目录）"""
-    if getattr(sys, 'frozen', False):
-        return os.path.dirname(sys.executable)
-    else:
-        return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def log_to_file(msg):
     """写入日志文件"""
@@ -28,7 +21,7 @@ def log_to_file(msg):
     try:
         with open(log_file, 'a', encoding='utf-8') as f:
             f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {msg}\n")
-    except:
+    except Exception:
         pass
 
 class EnvironmentChecker:
@@ -46,7 +39,7 @@ class EnvironmentChecker:
         Returns:
             bool: 环境是否就绪
         """
-        runtime_dir = PythonInstaller.get_runtime_dir()
+        python_dir = PythonInstaller.get_python_dir()
         
         def log(msg):
             log_to_file(msg)
@@ -58,17 +51,17 @@ class EnvironmentChecker:
             if progress_callback:
                 progress_callback(percent)
         
-        log(f"项目目录: {_get_app_dir()}")
-        log(f"运行时目录: {runtime_dir}")
+        log(f"应用目录: {PythonInstaller.get_app_dir()}")
+        log(f"Python目录: {python_dir}")
         
-        os.makedirs(runtime_dir, exist_ok=True)
+        os.makedirs(python_dir, exist_ok=True)
         
         # 1. 检查/安装 Python (10% → 30%)
         report_progress(10)
         if not PythonInstaller.find_system_python():
             log("Python未安装，开始安装...")
             report_progress(15)
-            if not PythonInstaller.install_python(runtime_dir, log):
+            if not PythonInstaller.install_python(log):
                 log("Python安装失败")
                 return False
         else:
@@ -79,7 +72,7 @@ class EnvironmentChecker:
         if not DependencyManager.check_pip_module():
             log("pip未安装，开始安装...")
             report_progress(35)
-            if not DependencyManager.install_pip(runtime_dir, log):
+            if not DependencyManager.install_pip(log):
                 log("pip安装失败")
                 return False
         else:

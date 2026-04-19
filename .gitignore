@@ -63,9 +63,14 @@ regression_*.py
 optimized_*.py
 run_tests.py
 run_tests.bat
+pytest.ini
+tests/
+!.gitkeep
 
 # Reports and logs
 *.log
+download.log
+init_done.txt
 *.txt
 !requirements.txt
 !README.md

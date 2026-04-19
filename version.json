@@ -1,9 +1,9 @@
 {
-  "version": "3.0.1",
-  "download_url": "https://github.com/dyygs/Dota2_Translator_GUI/releases/download/3.0.1/Dota2Translator_v3.0.1.exe",
+  "version": "2.2.2",
+  "download_url": "https://github.com/dyygs/Dota2_Translator_GUI/releases/download/2.2.2/Dota2Translator_v2.2.2.exe",
   "sha256": "",
-  "size": 11225655,
-  "release_notes": "1. 模块化重构\n2. 添加自动更新功能\n3. 统一版本号管理",
+  "size": 11000000,
+  "release_notes": "1. 实时翻译功能优化\n2. OCR模型自动下载\n3. 启动器UI优化",
   "min_version": "2.0.0",
   "force_update": false,
   "update_type": "full"

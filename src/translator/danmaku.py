@@ -332,10 +332,11 @@ class DanmakuWindow:
 
     def _auto_remove(self, msg_id):
         time.sleep(self.display_duration)
-        if self.root:
-            self.root.after(0, lambda: self._try_remove_by_id(msg_id))
-        else:
-            self._try_remove_by_id(msg_id)
+        try:
+            if self.root:
+                self.root.after(0, lambda: self._try_remove_by_id(msg_id))
+        except tk.TclError:
+            pass
 
     def _try_remove(self, msg_id):
         for i, msg in enumerate(self.messages):

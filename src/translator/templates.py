@@ -6,7 +6,6 @@
 class TranslationTemplates:
     """Dota2专用翻译模板管理器"""
     
-    # 英雄简称映射
     HERO_ABBREVIATIONS = {
         "qop": "Queen of Pain",
         "pa": "Phantom Assassin",
@@ -24,13 +23,12 @@ class TranslationTemplates:
         "zeus": "Zeus",
         "lina": "Lina",
         "cm": "Crystal Maiden",
-        "wd": "Warlock",
         "wd": "Witch Doctor",
         "np": "Nature's Prophet",
         "furion": "Nature's Prophet",
         "bh": "Bounty Hunter",
         "riki": "Riki",
-        "sa": "Sand Arrow",
+        "sa": "Riki",
         "pl": "Phantom Lancer",
         "naga": "Naga Siren",
         "spectre": "Spectre",
@@ -49,10 +47,10 @@ class TranslationTemplates:
         "bm": "Beastmaster",
         "ds": "Dark Seer",
         "doom": "Doom",
-        "huskar": "Huskarr",
+        "huskar": "Huskar",
         "lycan": "Lycan",
-        "na": "Nyx Assasin",
-        "nyx": "Nyx Assasin",
+        "na": "Nyx Assassin",
+        "nyx": "Nyx Assassin",
         "slardar": "Slardar",
         "sl": "Slardar",
         "tide": "Tidehunter",
@@ -60,7 +58,6 @@ class TranslationTemplates:
         "timbersaw": "Timbersaw",
         "ts": "Timbersaw",
         "treant": "Treant Protector",
-        "tp": "Treant Protector",
         "tusk": "Tusk",
         "underlord": "Underlord",
         "ul": "Underlord",
@@ -74,7 +71,7 @@ class TranslationTemplates:
         "bat": "Batrider",
         "chen": "Chen",
         "clinkz": "Clinkz",
-        "ck": "Clinkz",
+        "ck": "Chaos Knight",
         "dazzle": "Dazzle",
         "dz": "Dazzle",
         "dp": "Death Prophet",
@@ -82,7 +79,7 @@ class TranslationTemplates:
         "es": "Earthshaker",
         "enchantress": "Enchantress",
         "ench": "Enchantress",
-        "ench": "Enigma",
+        "enigma": "Enigma",
         "gg": "Grimstroke",
         "io": "Io",
         "jakiro": "Jakiro",
@@ -96,7 +93,6 @@ class TranslationTemplates:
         "ogre": "Ogre Magi",
         "om": "Ogre Magi",
         "oracle": "Oracle",
-        "od": "Outworld Devourer",
         "od": "Outworld Devourer",
         "pugna": "Pugna",
         "razor": "Razor",
@@ -125,15 +121,11 @@ class TranslationTemplates:
         "winter_wyvern": "Winter Wyvern",
         "ww": "Winter Wyvern",
         "witch_doctor": "Witch Doctor",
-        "wd": "Witch Doctor",
-        "zo": "Zo",
     }
     
-    # 物品名称映射
     ITEM_NAMES = {
         "bkb": "Black King Bar",
         "mkb": "Monkey King Bar",
-        "bkb": "Black King Bar",
         "dd": "Diffusal Blade",
         "db": "Diffusal Blade",
         "roshan": "Roshan",
@@ -202,7 +194,6 @@ class TranslationTemplates:
         "phase": "Phase Boots",
         "pb": "Phase Boots",
         "tranquil": "Tranquil Boots",
-        "tb": "Tranquil Boots",
         "thread": "Power Treads",
         "boots": "Boots of Speed",
         "travel": "Travel Boots",
@@ -228,7 +219,6 @@ class TranslationTemplates:
         "tri": "Triumvirate",
     }
     
-    # 游戏术语映射
     GAME_TERMS = {
         "gank": "抓人",
         "push": "推塔",

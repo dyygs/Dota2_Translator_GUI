@@ -57,7 +57,9 @@ class RealtimeTranslator:
             self.log(f"加载paddleocr失败: {e}")
             return False
 
-        paddleocr_dir = r"D:\Dota2Translator\models"
+        paddleocr_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "models")
+        if not os.path.exists(paddleocr_dir):
+            paddleocr_dir = os.path.join(os.path.expanduser("~"), ".paddleocr", "whl")
 
         model_dirs = [
             ("en_PP-OCRv3_det_infer", "inference.pdmodel"),
@@ -87,7 +89,7 @@ class RealtimeTranslator:
                     if not self._download_model("rec_model"):
                         download_success = False
 
-                if download_success and not os.path.exists(os.path.join(paddlecr_dir, "ch_ppocr_mobile_v2.0_cls_infer", "inference.pdmodel")):
+                if download_success and not os.path.exists(os.path.join(paddleocr_dir, "ch_ppocr_mobile_v2.0_cls_infer", "inference.pdmodel")):
                     self.log("下载方向分类模型...")
                     if not self._download_model("cls_model"):
                         download_success = False
@@ -127,9 +129,45 @@ class RealtimeTranslator:
     def _download_model(self, model_type):
         """下载OCR模型"""
         try:
-            from src.environment.checker import EnvironmentChecker
-            checker = EnvironmentChecker()
-            return checker.download_model(model_type)
+            import urllib.request
+            import ssl
+            import os
+            
+            paddleocr_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "models")
+            if not os.path.exists(paddleocr_dir):
+                paddleocr_dir = os.path.join(os.path.expanduser("~"), ".paddleocr", "whl")
+            
+            os.makedirs(paddleocr_dir, exist_ok=True)
+            
+            model_urls = {
+                "det_model": "https://paddleocr.bj.bcebos.com/PP-OCRv3/english/en_PP-OCRv3_det_infer.tar",
+                "rec_model": "https://paddleocr.bj.bcebos.com/PP-OCRv3/english/en_PP-OCRv3_rec_infer.tar",
+                "cls_model": "https://paddleocr.bj.bcebos.com/dygraph_v2.0/ch/ch_ppocr_mobile_v2.0_cls_infer.tar"
+            }
+            
+            if model_type not in model_urls:
+                self.log(f"未知模型类型: {model_type}")
+                return False
+            
+            url = model_urls[model_type]
+            model_dir = os.path.join(paddleocr_dir, model_type.replace("_model", ""))
+            tar_path = os.path.join(paddleocr_dir, f"{model_type}.tar")
+            
+            ctx = ssl.create_default_context()
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+            
+            self.log(f"下载 {model_type} 从 {url[:50]}...")
+            urllib.request.urlretrieve(url, tar_path)
+            
+            import tarfile
+            with tarfile.open(tar_path, 'r') as tar:
+                tar.extractall(paddleocr_dir)
+            
+            os.remove(tar_path)
+            self.log(f"{model_type} 下载完成")
+            return True
+            
         except Exception as e:
             self.log(f"下载模型失败({model_type}): {e}")
             return False

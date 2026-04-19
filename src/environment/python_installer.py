@@ -9,7 +9,6 @@ import subprocess
 import ctypes
 import platform
 
-# 隐藏控制台窗口的配置
 def get_startupinfo():
     """获取隐藏窗口的启动信息"""
     if sys.platform == 'win32':
@@ -24,36 +23,65 @@ STARTUPINFO = get_startupinfo()
 class PythonInstaller:
     """Python安装管理器"""
     
-    @staticmethod
-    def get_runtime_dir():
-        """获取运行时目录（使用D盘短路径）"""
-        return r"D:\Dota2Translator\runtime"
+    _python_dir = None
+    _download_dir = None
     
-    @staticmethod
-    def get_download_dir():
-        """获取下载目录"""
-        return r"D:\Dota2Translator\downloads"
+    @classmethod
+    def get_app_dir(cls):
+        """获取应用主目录"""
+        return r"D:\Dota2Translator"
+    
+    @classmethod
+    def get_python_dir(cls):
+        """获取Python目录"""
+        if cls._python_dir is None:
+            cls._python_dir = os.path.join(cls.get_app_dir(), "python")
+        return cls._python_dir
+    
+    @classmethod
+    def get_download_dir(cls):
+        """获取下载目录（临时存放安装包等）"""
+        if cls._download_dir is None:
+            cls._download_dir = os.path.join(cls.get_app_dir(), "downloads")
+        return cls._download_dir
+    
+    @classmethod
+    def get_python_exe(cls):
+        """获取Python可执行文件路径"""
+        return os.path.join(cls.get_python_dir(), "python.exe")
+    
+    @classmethod
+    def get_pip_exe(cls):
+        """获取pip可执行文件路径"""
+        return os.path.join(cls.get_python_dir(), "Scripts", "pip.exe")
     
     @staticmethod
     def find_system_python():
         """
-        查找系统中的Python 3.11.9（动态查找，不硬编码路径）
+        查找系统中的Python 3.11+
         
         Returns:
             str|None: Python可执行文件路径，如果未找到返回None
         """
-        # 先检查D盘安装的Python
-        d_python = r"D:\Dota2Translator\python\python.exe"
-        if os.path.exists(d_python):
-            try:
-                result = subprocess.run([d_python, '--version'], capture_output=True, timeout=5, startupinfo=STARTUPINFO)
-                ver_output = result.stdout.decode('utf-8', errors='ignore') + result.stderr.decode('utf-8', errors='ignore')
-                if '3.11.9' in ver_output:
-                    return d_python
-            except Exception as e:
-                pass
+        possible_paths = []
         
-        # 尝试从PATH中查找
+        possible_paths.extend([
+            PythonInstaller.get_python_exe(),
+            os.path.join(os.environ.get('LOCALAPPDATA', ''), 'Programs', 'Python', 'Python311', 'python.exe'),
+            os.path.join(os.environ.get('LOCALAPPDATA', ''), 'Programs', 'Python', 'Python310', 'python.exe'),
+            os.path.join(os.environ.get('LOCALAPPDATA', ''), 'Programs', 'Python', 'Python39', 'python.exe'),
+        ])
+        
+        for python_path in possible_paths:
+            if os.path.exists(python_path):
+                try:
+                    result = subprocess.run([python_path, '--version'], capture_output=True, timeout=5, startupinfo=STARTUPINFO)
+                    ver_output = result.stdout.decode('utf-8', errors='ignore') + result.stderr.decode('utf-8', errors='ignore')
+                    if 'Python 3.' in ver_output:
+                        return python_path
+                except Exception:
+                    pass
+        
         try:
             result = subprocess.run(['where', 'python'], capture_output=True, timeout=5, startupinfo=STARTUPINFO)
             if result.returncode == 0:
@@ -64,36 +92,21 @@ class PythonInstaller:
                         try:
                             ver_result = subprocess.run([p, '--version'], capture_output=True, timeout=5, startupinfo=STARTUPINFO)
                             ver_output = ver_result.stdout.decode('utf-8', errors='ignore') + ver_result.stderr.decode('utf-8', errors='ignore')
-                            if '3.11.9' in ver_output:
+                            if 'Python 3.' in ver_output:
                                 return p
-                        except Exception as e:
+                        except Exception:
                             continue
-        except Exception as e:
+        except Exception:
             pass
-        
-        # 尝试常见路径（使用环境变量）
-        local_app_data = os.environ.get('LOCALAPPDATA', '')
-        if local_app_data:
-            for ver in ['Python311', 'Python310', 'Python39']:
-                path = os.path.join(local_app_data, 'Programs', 'Python', ver, 'python.exe')
-                if os.path.exists(path):
-                    try:
-                        ver_result = subprocess.run([path, '--version'], capture_output=True, timeout=5, startupinfo=STARTUPINFO)
-                        ver_output = ver_result.stdout.decode('utf-8', errors='ignore') + ver_result.stderr.decode('utf-8', errors='ignore')
-                        if '3.11.9' in ver_output:
-                            return path
-                    except Exception as e:
-                        continue
         
         return None
     
-    @staticmethod
-    def install_python(runtime_dir, log_func=None):
+    @classmethod
+    def install_python(cls, log_func=None):
         """
-        安装Python完整版（包含tkinter）
+        安装Python完整版到 D:\Dota2Translator\python
         
         Args:
-            runtime_dir: 运行时目录
             log_func: 日志回调函数
             
         Returns:
@@ -107,26 +120,28 @@ class PythonInstaller:
         
         log = lambda msg: (log_func(msg) if log_func else None)
         
-        system_python = PythonInstaller.find_system_python()
-        if system_python:
+        python_dir = cls.get_python_dir()
+        python_exe = cls.get_python_exe()
+        
+        if os.path.exists(python_exe):
+            log(f"Python已安装: {python_exe}")
+            return True
+        
+        system_python = cls.find_system_python()
+        if system_python and system_python != python_exe:
             log(f"发现系统Python: {system_python}")
             return True
         
-        log("未发现系统Python，开始安装到D盘...")
+        log("未发现Python，开始安装...")
         
-        d_install_dir = r"D:\Dota2Translator\python"
-        d_python_path = os.path.join(d_install_dir, "python.exe")
+        download_dir = cls.get_download_dir()
+        os.makedirs(download_dir, exist_ok=True)
+        os.makedirs(python_dir, exist_ok=True)
         
-        if os.path.exists(d_python_path):
-            log(f"D盘Python已安装: {d_python_path}")
-            return True
+        exe_path = os.path.join(download_dir, "python_installer.exe")
         
-        exe_path = os.path.join(runtime_dir, "python_installer.exe")
         if not os.path.exists(exe_path):
             log("下载Python完整版安装包...")
-            
-            download_dir = PythonInstaller.get_download_dir()
-            os.makedirs(download_dir, exist_ok=True)
             
             last_error = None
             for url in MIRRORS["python"]:
@@ -135,13 +150,7 @@ class PythonInstaller:
                     ctx.check_hostname = False
                     ctx.verify_mode = ssl.CERT_NONE
                     
-                    local_path = os.path.join(download_dir, "python_installer.exe")
-                    urllib.request.urlretrieve(url, local_path)
-                    
-                    if os.path.exists(exe_path):
-                        os.remove(exe_path)
-                    shutil.move(local_path, exe_path)
-                    
+                    urllib.request.urlretrieve(url, exe_path)
                     log("下载成功!")
                     break
                 except Exception as e:
@@ -152,17 +161,16 @@ class PythonInstaller:
                 return False
         
         try:
-            log("正在安装Python到D盘...")
-            os.makedirs(d_install_dir, exist_ok=True)
+            log(f"正在安装Python到 {python_dir}...")
             
             result = subprocess.run(
-                [exe_path, "/passive", "InstallAllUsers=0", f"TargetDir={d_install_dir}", 
+                [exe_path, "/passive", "InstallAllUsers=0", f"TargetDir={python_dir}", 
                  "PrependPath=0", "Include_test=0", "Include_pip=1"],
                 capture_output=True, timeout=600
             )
             
-            if os.path.exists(d_python_path):
-                log(f"Python安装完成: {d_python_path}")
+            if os.path.exists(python_exe):
+                log(f"Python安装完成: {python_exe}")
                 return True
             else:
                 log(f"Python安装失败，返回码: {result.returncode}")

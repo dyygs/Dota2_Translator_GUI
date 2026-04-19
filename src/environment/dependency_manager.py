@@ -41,7 +41,7 @@ class DependencyManager:
                 startupinfo=STARTUPINFO
             )
             return result.returncode == 0
-        except:
+        except Exception:
             return False
     
     @staticmethod
@@ -57,11 +57,11 @@ class DependencyManager:
                 startupinfo=STARTUPINFO
             )
             return result.returncode == 0
-        except:
+        except Exception:
             return False
     
     @staticmethod
-    def install_pip(runtime_dir, log_func=None):
+    def install_pip(log_func=None):
         """安装pip"""
         import shutil
         import urllib.request
@@ -77,19 +77,15 @@ class DependencyManager:
             return True
         
         log_func("安装pip...") if log_func else None
-        pip_script = os.path.join(runtime_dir, "get-pip.py")
         
         download_dir = PythonInstaller.get_download_dir()
         os.makedirs(download_dir, exist_ok=True)
         
+        pip_script = os.path.join(download_dir, "get-pip.py")
+        
         for url in MIRRORS["pip_script"]:
             try:
-                local_path = os.path.join(download_dir, "get-pip.py")
-                urllib.request.urlretrieve(url, local_path)
-                
-                if os.path.exists(pip_script):
-                    os.remove(pip_script)
-                shutil.move(local_path, pip_script)
+                urllib.request.urlretrieve(url, pip_script)
                 
                 result = subprocess.run([python_path, pip_script], capture_output=True, timeout=300, startupinfo=STARTUPINFO)
                 if result.returncode != 0:
@@ -107,7 +103,10 @@ class DependencyManager:
                 continue
             finally:
                 if os.path.exists(pip_script):
-                    os.remove(pip_script)
+                    try:
+                        os.remove(pip_script)
+                    except Exception:
+                        pass
         
         return False
     
@@ -145,7 +144,6 @@ class DependencyManager:
         Returns:
             tuple: (成功与否, 已跳过数, 新安装数)
         """
-        runtime_dir = PythonInstaller.get_runtime_dir()
         log = lambda msg: (log_func(msg) if log_func else None)
         
         total_deps = len(DependencyManager.DEPENDENCIES)

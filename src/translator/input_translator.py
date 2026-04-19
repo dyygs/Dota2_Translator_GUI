@@ -4,6 +4,9 @@
 """
 
 import re
+import pyperclip
+import pyautogui
+import time
 
 class InputTranslator:
     """输入翻译处理器"""
@@ -36,7 +39,6 @@ class InputTranslator:
         
         translated = self.engine.translate(text)
         
-        import pyperclip
         try:
             pyperclip.copy(translated)
             self.log(f"已复制到剪贴板: {translated}")
@@ -66,12 +68,9 @@ class InputTranslator:
             # 不包含中文 → 可能是英文，不翻译或翻译成中文
             translated = text
         
-        import pyperclip
         try:
             pyperclip.copy(translated)
             
-            import pyautogui
-            import time
             time.sleep(0.1)
             pyautogui.hotkey('ctrl', 'v')
             time.sleep(0.05)

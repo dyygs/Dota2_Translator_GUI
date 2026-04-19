@@ -27,6 +27,7 @@ class Dota2TranslationSystem:
         # 初始化各模块
         self.cache = {}  # 精确缓存
         self.phrase_cache = {}  # 句式缓存
+        self.max_cache_size = 1000  # 最大缓存条目数
         self._init_post_processors()
     
     def _load_vocabulary(self):
@@ -143,6 +144,8 @@ class Dota2TranslationSystem:
     
     def _add_to_cache(self, text: str, result: str):
         """添加到缓存"""
+        if len(self.cache) >= self.max_cache_size:
+            self.cache.pop(next(iter(self.cache)))
         cache_key = self._get_cache_key(text)
         self.cache[cache_key] = result
     
