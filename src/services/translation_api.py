@@ -188,8 +188,10 @@ class TranslationAPI:
         params = {
             'q': text,
             'langpair': f'{source}|{target}',
-            'de': self.mymemory_email
         }
+        
+        if self.mymemory_email:
+            params['de'] = self.mymemory_email
         
         max_retries = 3
         base_delay = 1
