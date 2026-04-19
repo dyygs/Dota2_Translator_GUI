@@ -26,8 +26,8 @@ wheels/
 env/
 venv/
 ENV/
-build_env/          # 项目构建虚拟环境
-runtime/            # Python运行时目录
+build_env/
+runtime/
 
 # IDE
 .idea/
@@ -39,43 +39,44 @@ runtime/            # Python运行时目录
 config.json
 *.spec
 models/
-check_result.txt   # 环境检查缓存
-src/1.png         # 二维码已base64编码到qrcode_data.py
+check_result.txt
+src/1.png
 
-# Old/backup files (ignore - not tracked in git)
-src/词汇表.py
-src/dota2_translation_system_old.py
+# Old/backup files
+*_old.py
+*_old/
+*_backup.py
+*_backup/
+*.bak
+*-main/
 
-# Test files (keep latest)
-test_100_diverse.py
-FULL_TEST_REPORT_100_V4_OPTIMIZED.md
-runtime_hook.py
-
-# Project specific files (ignore)
-UI_LAYOUT.md
-AI_INSTRUCTIONS.md
-
-# Other test files (ignore)
+# Test files
 test_*.py
 *_test.py
-debug_test.py
-evaluate_daodi.py
-regression_test_v2.py
+debug_*.py
 check_*.py
 analyze_*.py
 generate_*.py
-optimized_vocabulary.py
-translation_optimization_plan.py
-compare_results.py
+compare_*.py
+evaluate_*.py
+regression_*.py
+optimized_*.py
+run_tests.py
+run_tests.bat
 
-# Reports and logs (ignore other reports)
-完整测试报告_*.txt
+# Reports and logs
 *.log
-init_*.txt          # 临时状态文件
+*.txt
+!requirements.txt
+!README.md
 
 # Downloaded files
-python-*.zip        # Python嵌入版压缩包
+python-*.zip
 
 # OS
 .DS_Store
 Thumbs.db
+
+# Documentation (local only)
+UI_LAYOUT.md
+AI_INSTRUCTIONS.md
