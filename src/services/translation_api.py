@@ -20,7 +20,7 @@ class TranslationAPI:
         "https://deeplx-cf.aizaizuori.workers.dev/translate",
     ]
     
-    def __init__(self):
+    def __init__(self, email=None):
         self.session = requests.Session()
         self.session.headers.update({
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
@@ -35,7 +35,7 @@ class TranslationAPI:
         self.recovery_interval = 300
         
         self.mymemory_url = "https://api.mymemory.translated.net/get"
-        self.mymemory_email = 'REDACTED_EMAIL'
+        self.mymemory_email = email if email else ''
         
         self.request_interval = 1.0
         self.last_request_time = 0
@@ -240,22 +240,24 @@ class TranslationAPI:
 
 
 _api_instance = None
+_api_email = None
 
 
-def get_api() -> TranslationAPI:
+def get_api(email=None) -> TranslationAPI:
     """获取API单例"""
-    global _api_instance
-    if _api_instance is None:
-        _api_instance = TranslationAPI()
+    global _api_instance, _api_email
+    if _api_instance is None or (email is not None and email != _api_email):
+        _api_instance = TranslationAPI(email=email)
+        _api_email = email
     return _api_instance
 
 
-def translate(text: str, source: str, target: str) -> Tuple[str, str]:
+def translate(text: str, source: str, target: str, email=None) -> Tuple[str, str]:
     """
     翻译便捷函数
     返回: (翻译结果, 使用的引擎名称)
     """
-    return get_api().translate(text, source, target)
+    return get_api(email=email).translate(text, source, target)
 
 
 def translate_zh_to_en(text: str) -> Tuple[str, str]:
