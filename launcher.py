@@ -12,7 +12,7 @@ import tkinter as tk
 from tkinter import ttk, scrolledtext
 import threading
 
-VERSION = "2.3.0"
+from src.core.version import VERSION
 
 _main_process = None
 

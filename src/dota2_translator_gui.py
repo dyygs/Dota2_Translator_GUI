@@ -21,7 +21,7 @@ import pyperclip
 import pyautogui
 from PIL import Image, ImageTk
 
-VERSION = "3.0.1"
+from src.core.version import VERSION
 
 # ============================================================
 # 导入模块化组件（直接导入，无兼容层）
