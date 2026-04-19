@@ -12,13 +12,13 @@ from .dependency_manager import DependencyManager
 
 def get_log_file():
     """获取日志文件路径"""
-    app_dir = PythonInstaller.get_app_dir()
-    return os.path.join(app_dir, "launcher.log")
+    return os.path.join(PythonInstaller.get_data_dir(), "launcher.log")
 
 def log_to_file(msg):
     """写入日志文件"""
     log_file = get_log_file()
     try:
+        os.makedirs(os.path.dirname(log_file), exist_ok=True)
         with open(log_file, 'a', encoding='utf-8') as f:
             f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {msg}\n")
     except Exception:
@@ -39,7 +39,6 @@ class EnvironmentChecker:
         Returns:
             bool: 环境是否就绪
         """
-        python_dir = PythonInstaller.get_python_dir()
         
         def log(msg):
             log_to_file(msg)
@@ -51,13 +50,18 @@ class EnvironmentChecker:
             if progress_callback:
                 progress_callback(percent)
         
-        log(f"应用目录: {PythonInstaller.get_app_dir()}")
-        log(f"Python目录: {python_dir}")
+        data_dir = PythonInstaller.get_data_dir()
+        log(f"数据目录: {data_dir}")
+        log(f"Python默认目录: {PythonInstaller.get_default_python_dir()}")
         
-        os.makedirs(python_dir, exist_ok=True)
+        os.makedirs(data_dir, exist_ok=True)
         
-        # 1. 检查/安装 Python (10% → 30%)
+        report_progress(5)
+        
+        PythonInstaller.migrate_data_from_d_drive(log)
+        
         report_progress(10)
+        
         if not PythonInstaller.find_system_python():
             log("Python未安装，开始安装...")
             report_progress(15)
@@ -65,10 +69,9 @@ class EnvironmentChecker:
                 log("Python安装失败")
                 return False
         else:
-            log("Python已安装")
+            log(f"Python已安装: {PythonInstaller.find_system_python()}")
         report_progress(30)
         
-        # 2. 检查/安装 pip (30% → 50%)
         if not DependencyManager.check_pip_module():
             log("pip未安装，开始安装...")
             report_progress(35)
@@ -79,7 +82,6 @@ class EnvironmentChecker:
             log("pip已安装")
         report_progress(50)
         
-        # 3. 检查/安装依赖 (50% → 90%)
         success, skipped, installed = DependencyManager.check_and_install_dependencies(log_func=log, progress_callback=progress_callback)
         
         if not success:
@@ -96,6 +98,10 @@ class EnvironmentChecker:
         log("环境初始化完成!")
         log_to_file("环境初始化完成!")
         
+        init_file = os.path.join(data_dir, "init_done.txt")
+        with open(init_file, 'w') as f:
+            f.write("init_done")
+
         report_progress(100)
 
         return True

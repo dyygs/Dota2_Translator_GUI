@@ -57,9 +57,13 @@ class RealtimeTranslator:
             self.log(f"加载paddleocr失败: {e}")
             return False
 
-        paddleocr_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "models")
-        if not os.path.exists(paddleocr_dir):
-            paddleocr_dir = os.path.join(os.path.expanduser("~"), ".paddleocr", "whl")
+        try:
+            from src.environment.python_installer import PythonInstaller
+            paddleocr_dir = os.path.join(PythonInstaller.get_data_dir(), "models")
+        except Exception:
+            paddleocr_dir = os.path.join(os.path.expanduser("~"), "Documents", "Dota2Translator", "models")
+        
+        os.makedirs(paddleocr_dir, exist_ok=True)
 
         model_dirs = [
             ("en_PP-OCRv3_det_infer", "inference.pdmodel"),
@@ -104,7 +108,7 @@ class RealtimeTranslator:
 
             except Exception as download_error:
                 self.log(f"模型下载失败: {download_error}")
-                self.log("请检查网络连接后重试，或手动下载模型到 ~/.paddleocr 目录")
+                self.log("请检查网络连接后重试")
                 self.ocr_available = False
                 self._ocr_error = str(download_error)
                 return False
@@ -113,9 +117,17 @@ class RealtimeTranslator:
             self.log("正在加载OCR模型...")
             os.environ['GLOG_minloglevel'] = '2'
             os.environ['FLAGS_eager_delete_tensor_gb'] = '0.0'
+            
+            det_model_dir = os.path.join(paddleocr_dir, "en_PP-OCRv3_det_infer")
+            rec_model_dir = os.path.join(paddleocr_dir, "en_PP-OCRv3_rec_infer")
+            cls_model_dir = os.path.join(paddleocr_dir, "ch_ppocr_mobile_v2.0_cls_infer")
+            
             self.ocr = PaddleOCR(
                 use_textline_orientation=True,
-                lang='en'
+                lang='en',
+                det_model_dir=det_model_dir,
+                rec_model_dir=rec_model_dir,
+                cls_model_dir=cls_model_dir
             )
             self.ocr_available = True
             self.log("OCR模型加载成功")
@@ -133,9 +145,11 @@ class RealtimeTranslator:
             import ssl
             import os
             
-            paddleocr_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "models")
-            if not os.path.exists(paddleocr_dir):
-                paddleocr_dir = os.path.join(os.path.expanduser("~"), ".paddleocr", "whl")
+            try:
+                from src.environment.python_installer import PythonInstaller
+                paddleocr_dir = os.path.join(PythonInstaller.get_data_dir(), "models")
+            except Exception:
+                paddleocr_dir = os.path.join(os.path.expanduser("~"), "Documents", "Dota2Translator", "models")
             
             os.makedirs(paddleocr_dir, exist_ok=True)
             

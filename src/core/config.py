@@ -43,11 +43,12 @@ class Config:
         self.load_config()
     
     def _get_default_config_file(self):
-        """获取默认配置文件路径（exe所在目录）"""
-        if getattr(sys, 'frozen', False):
-            base_dir = os.path.dirname(sys.executable)
-        else:
-            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        """获取默认配置文件路径（Documents目录）"""
+        try:
+            from src.environment.python_installer import PythonInstaller
+            base_dir = PythonInstaller.get_data_dir()
+        except Exception:
+            base_dir = os.path.join(os.path.expanduser("~"), "Documents", "Dota2Translator")
         return os.path.join(base_dir, "config.json")
     
     def load_config(self):

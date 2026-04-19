@@ -750,12 +750,12 @@ class Dota2TranslatorGUI:
                     progress_dialog.update_idletasks()
                     progress_dialog.update()
                 except Exception as e:
-                    with open("D:\\Dota2Translator\\download.log", "a", encoding="utf-8") as f:
+                    with open(os.path.join(PythonInstaller.get_data_dir(), "download.log"), "a", encoding="utf-8") as f:
                         f.write(f"[UI更新错误] {e}\n")
             try:
                 self.root.after(0, do_update)
             except Exception as e:
-                with open("D:\\Dota2Translator\\download.log", "a", encoding="utf-8") as f:
+                with open(os.path.join(PythonInstaller.get_data_dir(), "download.log"), "a", encoding="utf-8") as f:
                     f.write(f"[after错误] {e}\n")
         
         def progress_callback(downloaded, total, current_url=None):
@@ -766,13 +766,13 @@ class Dota2TranslatorGUI:
                 url_text = current_url[:50] + "..." if current_url else None
                 safe_update(f"{mb_downloaded:.1f} MB / {mb_total:.1f} MB ({percent:.0f}%)", percent, url_text)
             except Exception as e:
-                with open("D:\\Dota2Translator\\download.log", "a", encoding="utf-8") as f:
+                with open(os.path.join(PythonInstaller.get_data_dir(), "download.log"), "a", encoding="utf-8") as f:
                     f.write(f"[进度回调错误] {e}\n")
         
         def do_download():
             try:
                 safe_update("正在连接下载服务器...", 0)
-                with open("D:\\Dota2Translator\\download.log", "a", encoding="utf-8") as f:
+                with open(os.path.join(PythonInstaller.get_data_dir(), "download.log"), "a", encoding="utf-8") as f:
                     f.write(f"[下载] 开始下载: {download_url}\n")
                     f.write(f"[下载] 保存到: {new_exe_path}\n")
                 
@@ -782,13 +782,13 @@ class Dota2TranslatorGUI:
                 download_result['verified'] = result.get('verified', False)
                 download_result['error'] = result.get('error')
                 
-                with open("D:\\Dota2Translator\\download.log", "a", encoding="utf-8") as f:
+                with open(os.path.join(PythonInstaller.get_data_dir(), "download.log"), "a", encoding="utf-8") as f:
                     f.write(f"[下载] 结果: success={download_result['success']}, error={download_result['error']}\n")
                 
             except Exception as e:
                 download_result['success'] = False
                 download_result['error'] = str(e)
-                with open("D:\\Dota2Translator\\download.log", "a", encoding="utf-8") as f:
+                with open(os.path.join(PythonInstaller.get_data_dir(), "download.log"), "a", encoding="utf-8") as f:
                     f.write(f"[下载] 异常: {e}\n")
                 print(f"[下载] 异常: {e}")
             

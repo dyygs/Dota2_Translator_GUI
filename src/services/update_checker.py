@@ -465,8 +465,22 @@ def download_update(url, dest_path, progress_callback=None, expected_sha256=None
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_NONE
     
-    log_file = r"D:\Dota2Translator\download.log"
-    log = lambda msg: open(log_file, "a", encoding="utf-8").write(f"{msg}\n")
+    try:
+        from src.environment.python_installer import PythonInstaller
+        log_file = os.path.join(PythonInstaller.get_data_dir(), "download.log")
+    except Exception:
+        log_file = os.path.join(os.path.expanduser("~"), "Dota2Translator", "download.log")
+    
+    os.makedirs(os.path.dirname(log_file), exist_ok=True)
+    
+    def write_log(msg):
+        try:
+            with open(log_file, "a", encoding="utf-8") as f:
+                f.write(f"{msg}\n")
+        except Exception:
+            pass
+    
+    log = write_log
     
     urls_to_try = [proxy + url for proxy in GITHUB_PROXIES]
     urls_to_try.append(url)

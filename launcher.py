@@ -20,11 +20,15 @@ _should_run_main = False
 _root = None
 
 def get_app_dir():
-    """获取应用目录（exe所在目录）"""
-    if getattr(sys, 'frozen', False):
-        return os.path.dirname(sys.executable)
-    else:
-        return os.path.dirname(os.path.abspath(__file__))
+    """获取应用数据目录"""
+    try:
+        from src.environment.python_installer import PythonInstaller
+        return PythonInstaller.get_data_dir()
+    except Exception:
+        if getattr(sys, 'frozen', False):
+            return os.path.dirname(sys.executable)
+        else:
+            return os.path.dirname(os.path.abspath(__file__))
 
 def get_meipass():
     """获取PyInstaller临时解压目录"""
@@ -34,8 +38,9 @@ def get_meipass():
 
 def log_to_file(msg):
     """写入日志文件"""
-    log_file = os.path.join(get_app_dir(), "launcher.log")
+    log_file = os.path.join(get_app_dir(), "logs", "launcher.log")
     try:
+        os.makedirs(os.path.dirname(log_file), exist_ok=True)
         with open(log_file, 'a', encoding='utf-8') as f:
             f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {msg}\n")
     except:
@@ -81,7 +86,6 @@ def run_main_program():
                 os.path.join(os.environ.get('LOCALAPPDATA', ''), 'Programs', 'Python', 'Python311', 'python.exe'),
                 os.path.join(os.environ.get('LOCALAPPDATA', ''), 'Programs', 'Python', 'Python310', 'python.exe'),
                 os.path.join(os.environ.get('LOCALAPPDATA', ''), 'Programs', 'Python', 'Python39', 'python.exe'),
-                'D:\\Dota2Translator\\python\\python.exe',
             ]
             for path in possible_paths:
                 if os.path.exists(path):
